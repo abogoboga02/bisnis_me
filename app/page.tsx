@@ -1,65 +1,109 @@
-import Image from "next/image";
+import Link from "next/link";
+import { ArrowRight, LayoutTemplate, ShieldCheck, Sparkles } from "lucide-react";
+import { getBusinesses, getTemplates } from "@/lib/api";
 
-export default function Home() {
+export default async function HomePage() {
+  const [businesses, templates] = await Promise.all([getBusinesses(), getTemplates()]);
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <main className="min-h-screen px-6 py-10 md:px-10 lg:px-16">
+      <section className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+        <div className="space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-cyan-100">
+            <Sparkles className="h-4 w-4" />
+            Multi business landing page builder
+          </div>
+          <div className="space-y-5">
+            <h1 className="max-w-3xl font-display text-5xl font-bold tracking-tight text-white md:text-7xl">
+              Build branded landing pages for every business slug.
+            </h1>
+            <p className="max-w-2xl text-lg leading-8 text-slate-300">
+              Generate a polished landing page for each business, manage hero content and services from
+              the admin area, and route enquiries straight into WhatsApp.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-4">
+            <Link
+              href="/admin/dashboard"
+              className="glow-ring rounded-full bg-cyan-300 px-6 py-3 font-semibold text-slate-950 transition hover:-translate-y-0.5"
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Open admin dashboard
+            </Link>
+            <Link
+              href={businesses[0] ? `/${businesses[0].slug}` : "/admin/business"}
+              className="rounded-full border border-white/14 bg-white/5 px-6 py-3 font-semibold text-white transition hover:border-cyan-300/40 hover:bg-white/10"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              Preview live business
+            </Link>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-3">
+            {[
+              {
+                icon: LayoutTemplate,
+                title: "Dynamic templates",
+                copy: "Hero, services, and contact sections adapt per business slug.",
+              },
+              {
+                icon: ShieldCheck,
+                title: "Admin managed",
+                copy: "Create, edit, and delete businesses from a single dashboard flow.",
+              },
+              {
+                icon: ArrowRight,
+                title: "Lead ready",
+                copy: "Direct CTA, floating WhatsApp button, and SEO-ready metadata.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="glass-panel rounded-3xl p-5">
+                <item.icon className="h-6 w-6 text-cyan-300" />
+                <h2 className="mt-4 text-lg font-semibold text-white">{item.title}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-300">{item.copy}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+
+        <div className="glass-panel rounded-[2rem] p-6">
+          <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/40 p-5">
+            <p className="text-sm uppercase tracking-[0.24em] text-cyan-200/80">Active businesses</p>
+            <div className="mt-6 space-y-4">
+              {businesses.map((business) => (
+                <Link
+                  key={business.id}
+                  href={`/${business.slug}`}
+                  className="block rounded-2xl border border-white/8 bg-white/5 p-4 transition hover:-translate-y-1 hover:border-cyan-300/30 hover:bg-white/8"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h2 className="text-lg font-semibold text-white">{business.name}</h2>
+                      <p className="mt-1 text-sm text-slate-300">{business.tagline}</p>
+                    </div>
+                    <ArrowRight className="mt-1 h-5 w-5 text-cyan-200" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            <div className="mt-6 rounded-2xl border border-white/8 bg-white/5 p-4">
+              <p className="text-sm uppercase tracking-[0.24em] text-cyan-200/80">Templates</p>
+              <div className="mt-4 space-y-3">
+                {templates.map((template) => (
+                  <div key={template.id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-950/30 px-4 py-3">
+                    <div>
+                      <p className="font-semibold text-white">{template.name}</p>
+                      <p className="text-sm text-slate-400">{template.description}</p>
+                    </div>
+                    <span
+                      className="h-3 w-3 rounded-full"
+                      style={{ backgroundColor: template.accent ?? "#67e8f9" }}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+    </main>
   );
 }
