@@ -2,19 +2,34 @@
 
 import type { Business } from "@/lib/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:5000";
+const API_BASE_PATH = "/api/business";
+
+async function parseErrorMessage(response: Response, fallbackMessage: string) {
+  try {
+    const payload = (await response.json()) as { error?: string };
+    return payload.error || fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+}
 
 export async function saveBusiness(business: Business): Promise<Business> {
   const method = business.id ? "PUT" : "POST";
-  const endpoint = business.id ? `/api/business/${business.id}` : "/api/business";
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(business),
-  });
+  const endpoint = business.id ? `${API_BASE_PATH}/${business.id}` : API_BASE_PATH;
+
+  let response: Response;
+  try {
+    response = await fetch(endpoint, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(business),
+    });
+  } catch {
+    throw new Error("Failed to reach the business API");
+  }
 
   if (!response.ok) {
-    throw new Error("Failed to save business");
+    throw new Error(await parseErrorMessage(response, "Failed to save business"));
   }
 
   const payload = (await response.json()) as { data: Business };
@@ -22,11 +37,16 @@ export async function saveBusiness(business: Business): Promise<Business> {
 }
 
 export async function deleteBusinessById(id: number) {
-  const response = await fetch(`${API_URL}/api/business/${id}`, {
-    method: "DELETE",
-  });
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE_PATH}/${id}`, {
+      method: "DELETE",
+    });
+  } catch {
+    throw new Error("Failed to reach the business API");
+  }
 
   if (!response.ok && response.status !== 204) {
-    throw new Error("Failed to delete business");
+    throw new Error(await parseErrorMessage(response, "Failed to delete business"));
   }
 }

@@ -48,6 +48,7 @@ export function BusinessManager({
     initialBusinesses[0] ? structuredClone(initialBusinesses[0]) : emptyBusiness(),
   );
   const [status, setStatus] = useState("");
+  const [error, setError] = useState("");
 
   function selectBusiness(id: number) {
     setSelectedId(id);
@@ -87,14 +88,20 @@ export function BusinessManager({
   }
 
   async function handleSave() {
-    const saved = await saveBusiness(draft);
-    const nextBusinesses = businesses.some((item) => item.id === saved.id)
-      ? businesses.map((item) => (item.id === saved.id ? saved : item))
-      : [saved, ...businesses];
-    setBusinesses(nextBusinesses);
-    setSelectedId(saved.id);
-    setDraft(structuredClone(saved));
-    setStatus("Business saved.");
+    setError("");
+    try {
+      const saved = await saveBusiness(draft);
+      const nextBusinesses = businesses.some((item) => item.id === saved.id)
+        ? businesses.map((item) => (item.id === saved.id ? saved : item))
+        : [saved, ...businesses];
+      setBusinesses(nextBusinesses);
+      setSelectedId(saved.id);
+      setDraft(structuredClone(saved));
+      setStatus("Business saved.");
+    } catch (error) {
+      setStatus("");
+      setError(error instanceof Error ? error.message : "Failed to save business.");
+    }
   }
 
   async function handleDelete() {
@@ -103,16 +110,22 @@ export function BusinessManager({
       return;
     }
 
-    await deleteBusinessById(draft.id);
-    const nextBusinesses = businesses.filter((business) => business.id !== draft.id);
-    setBusinesses(nextBusinesses);
-    if (nextBusinesses[0]) {
-      setSelectedId(nextBusinesses[0].id);
-      setDraft(structuredClone(nextBusinesses[0]));
-    } else {
-      startCreate();
+    setError("");
+    try {
+      await deleteBusinessById(draft.id);
+      const nextBusinesses = businesses.filter((business) => business.id !== draft.id);
+      setBusinesses(nextBusinesses);
+      if (nextBusinesses[0]) {
+        setSelectedId(nextBusinesses[0].id);
+        setDraft(structuredClone(nextBusinesses[0]));
+      } else {
+        startCreate();
+      }
+      setStatus("Business deleted.");
+    } catch (error) {
+      setStatus("");
+      setError(error instanceof Error ? error.message : "Failed to delete business.");
     }
-    setStatus("Business deleted.");
   }
 
   function handleHeroImageUpload(file: File | null) {
@@ -325,6 +338,7 @@ export function BusinessManager({
           </div>
 
           {status ? <p className="mt-6 text-sm text-cyan-100">{status}</p> : null}
+          {error ? <p className="mt-3 text-sm text-rose-200">{error}</p> : null}
         </section>
       </div>
     </main>
