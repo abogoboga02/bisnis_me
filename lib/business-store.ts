@@ -60,6 +60,18 @@ function createHttpError(status: number, message: string) {
   return error;
 }
 
+function normalizeSupabaseErrorMessage(message: string) {
+  if (message.includes("Invalid schema")) {
+    return "Schema Supabase belum aktif untuk API. Tambahkan schema bisnis_me ke Exposed schemas di Supabase.";
+  }
+
+  return message;
+}
+
+function throwSupabaseError(status: number, message: string) {
+  throw createHttpError(status, normalizeSupabaseErrorMessage(message));
+}
+
 function mapServiceRow(row: ServiceRow): Service {
   return {
     id: row.id,
@@ -190,7 +202,7 @@ async function getTemplateById(templateId: number | null) {
     .maybeSingle();
 
   if (error) {
-    throw createHttpError(500, error.message);
+    throwSupabaseError(500, error.message);
   }
 
   return (data as TemplateRow | null) ?? null;
@@ -206,7 +218,7 @@ async function getServicesByBusinessId(businessId: number) {
     .order("id", { ascending: true });
 
   if (error) {
-    throw createHttpError(500, error.message);
+    throwSupabaseError(500, error.message);
   }
 
   return (data as ServiceRow[] | null) ?? [];
@@ -223,7 +235,7 @@ export async function getBusinessByIdForAdmin(id: number) {
     .maybeSingle();
 
   if (error) {
-    throw createHttpError(500, error.message);
+    throwSupabaseError(500, error.message);
   }
 
   if (!data) {
@@ -304,7 +316,7 @@ export async function createBusinessRecord(payload: BusinessPayload) {
       throw createHttpError(409, "Slug bisnis sudah digunakan.");
     }
 
-    throw createHttpError(500, error?.message ?? "Gagal membuat bisnis.");
+    throw createHttpError(500, normalizeSupabaseErrorMessage(error?.message ?? "Gagal membuat bisnis."));
   }
 
   if (normalized.services.length > 0) {
@@ -320,7 +332,7 @@ export async function createBusinessRecord(payload: BusinessPayload) {
 
     if (servicesError) {
       await supabase.from("businesses").delete().eq("id", data.id);
-      throw createHttpError(500, servicesError.message);
+      throwSupabaseError(500, servicesError.message);
     }
   }
 
@@ -365,7 +377,7 @@ export async function updateBusinessRecord(id: number, payload: BusinessPayload)
       throw createHttpError(409, "Slug bisnis sudah digunakan.");
     }
 
-    throw createHttpError(500, error.message);
+    throwSupabaseError(500, error.message);
   }
 
   if (!data) {
@@ -374,7 +386,7 @@ export async function updateBusinessRecord(id: number, payload: BusinessPayload)
 
   const { error: deleteServicesError } = await supabase.from("services").delete().eq("business_id", id);
   if (deleteServicesError) {
-    throw createHttpError(500, deleteServicesError.message);
+    throwSupabaseError(500, deleteServicesError.message);
   }
 
   if (normalized.services.length > 0) {
@@ -389,7 +401,7 @@ export async function updateBusinessRecord(id: number, payload: BusinessPayload)
     );
 
     if (servicesError) {
-      throw createHttpError(500, servicesError.message);
+      throwSupabaseError(500, servicesError.message);
     }
   }
 
@@ -401,7 +413,7 @@ export async function deleteBusinessRecord(id: number) {
   const { data, error } = await supabase.from("businesses").delete().eq("id", id).select("id");
 
   if (error) {
-    throw createHttpError(500, error.message);
+    throwSupabaseError(500, error.message);
   }
 
   return Array.isArray(data) && data.length > 0;
