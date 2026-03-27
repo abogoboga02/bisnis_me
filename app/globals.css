@@ -1,18 +1,23 @@
 @import "tailwindcss";
 
 :root {
-  --background: #07111f;
-  --background-soft: #0d1a2c;
-  --foreground: #f5f7fb;
-  --muted: #8aa0be;
-  --card: rgba(255, 255, 255, 0.1);
-  --card-border: rgba(255, 255, 255, 0.16);
-  --brand: #67e8f9;
-  --brand-strong: #38bdf8;
-  --brand-secondary: #c084fc;
-  --shadow-soft: 0 24px 80px rgba(5, 16, 36, 0.28);
-  --font-body: "Segoe UI", "Avenir Next", "Helvetica Neue", sans-serif;
-  --font-display: "Trebuchet MS", "Franklin Gothic Medium", "Arial Narrow", sans-serif;
+  --background: #06231d;
+  --background-soft: #0c342c;
+  --foreground: #fffdee;
+  --muted: rgba(255, 253, 238, 0.72);
+  --card: rgba(12, 52, 44, 0.62);
+  --card-border: rgba(227, 239, 38, 0.16);
+  --brand: #e3ef26;
+  --brand-strong: #076653;
+  --brand-deep: #06231d;
+  --brand-light: #e2fbce;
+  --neutral-soft: rgba(255, 253, 238, 0.08);
+  --shadow-soft: 0 24px 90px rgba(2, 15, 12, 0.22);
+  --shadow-strong: 0 32px 100px rgba(2, 15, 12, 0.34);
+  --gradient-1: linear-gradient(135deg, #fffdee 0%, #e3ef26 100%);
+  --gradient-2: linear-gradient(135deg, #e2fbce 0%, #e3ef26 46%, #076653 100%);
+  --gradient-3: linear-gradient(135deg, #e3ef26 0%, #076653 52%, #0c342c 100%);
+  --gradient-4: linear-gradient(135deg, #076653 0%, #0c342c 58%, #06231d 100%);
 }
 
 @theme inline {
@@ -24,7 +29,7 @@
   --color-card-border: var(--card-border);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
-  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-secondary: var(--brand-light);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
 }
@@ -37,14 +42,84 @@ html {
   scroll-behavior: smooth;
 }
 
+@keyframes softPulse {
+  0% {
+    opacity: 0.18;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.28;
+    transform: scale(1.04);
+  }
+
+  100% {
+    opacity: 0.2;
+    transform: scale(1.01);
+  }
+}
+
+@keyframes auroraSlide {
+  0% {
+    background-position:
+      0% 0%,
+      12% 0%,
+      36% 0%,
+      72% 0%,
+      100% 0%;
+  }
+
+  50% {
+    background-position:
+      0% 0%,
+      18% 0%,
+      42% 0%,
+      66% 0%,
+      100% 0%;
+  }
+
+  100% {
+    background-position:
+      0% 0%,
+      10% 0%,
+      34% 0%,
+      74% 0%,
+      100% 0%;
+  }
+}
+
 body {
   min-height: 100vh;
   background:
-    radial-gradient(circle at top, rgba(56, 189, 248, 0.2), transparent 30%),
-    radial-gradient(circle at 80% 10%, rgba(192, 132, 252, 0.18), transparent 24%),
-    linear-gradient(180deg, #09111f 0%, #0f1b31 50%, #08111e 100%);
+    radial-gradient(circle at 12% 10%, rgba(227, 239, 38, 0.14), transparent 24%),
+    radial-gradient(circle at 85% 12%, rgba(226, 251, 206, 0.08), transparent 18%),
+    radial-gradient(circle at 50% 75%, rgba(7, 102, 83, 0.2), transparent 26%),
+    linear-gradient(180deg, #0c342c 0%, #06231d 42%, #041712 100%);
   color: var(--foreground);
-  font-family: var(--font-body), sans-serif;
+  font-family: var(--font-body), "Inter", "Segoe UI", sans-serif;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+  text-rendering: optimizeLegibility;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 16% 18%, rgba(255, 253, 238, 0.04), transparent 14%),
+    radial-gradient(circle at 80% 24%, rgba(227, 239, 38, 0.05), transparent 16%);
+  opacity: 0.82;
+  animation: softPulse 14s ease-in-out infinite;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at center, transparent 48%, rgba(4, 23, 18, 0.18) 100%);
 }
 
 a {
@@ -52,15 +127,34 @@ a {
   text-decoration: none;
 }
 
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-display), "DM Serif Display", Georgia, serif;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+::selection {
+  background: rgba(227, 239, 38, 0.28);
+  color: #06231d;
+}
+
 .glass-panel {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  background:
+    linear-gradient(180deg, rgba(255, 253, 238, 0.12), rgba(255, 253, 238, 0.03)),
+    linear-gradient(180deg, rgba(12, 52, 44, 0.82), rgba(6, 35, 29, 0.78));
   border: 1px solid var(--card-border);
   box-shadow: var(--shadow-soft);
-  backdrop-filter: blur(18px);
+  backdrop-filter: blur(24px);
 }
 
 .glow-ring {
   position: relative;
+  isolation: isolate;
 }
 
 .glow-ring::before {
@@ -68,10 +162,10 @@ a {
   position: absolute;
   inset: -1px;
   border-radius: inherit;
-  background: linear-gradient(135deg, rgba(103, 232, 249, 0.4), rgba(192, 132, 252, 0.32));
-  filter: blur(14px);
+  background: var(--gradient-2);
+  filter: blur(16px);
   opacity: 0;
-  transition: opacity 0.25s ease;
+  transition: opacity 300ms ease;
   z-index: -1;
 }
 
@@ -81,21 +175,295 @@ a {
 
 .admin-grid {
   background-image:
-    linear-gradient(rgba(138, 160, 190, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(138, 160, 190, 0.08) 1px, transparent 1px);
-  background-size: 32px 32px;
+    linear-gradient(rgba(255, 253, 238, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 253, 238, 0.03) 1px, transparent 1px);
+  background-size: 52px 52px;
 }
 
 .input {
   width: 100%;
   border-radius: 1rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(2, 6, 23, 0.4);
+  border: 1px solid rgba(227, 239, 38, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 238, 0.05), rgba(255, 253, 238, 0.02)),
+    rgba(6, 35, 29, 0.78);
   padding: 0.85rem 1rem;
   color: white;
   outline: none;
+  transition:
+    border-color 300ms ease,
+    box-shadow 300ms ease,
+    transform 300ms ease;
 }
 
 .input:focus {
-  border-color: rgba(103, 232, 249, 0.4);
+  border-color: rgba(227, 239, 38, 0.45);
+  box-shadow: 0 0 0 4px rgba(227, 239, 38, 0.08);
+}
+
+.premium-card {
+  border: 1px solid rgba(227, 239, 38, 0.14);
+  background:
+    linear-gradient(180deg, rgba(255, 253, 238, 0.06), rgba(255, 253, 238, 0.015)),
+    rgba(12, 52, 44, 0.9);
+  box-shadow: var(--shadow-soft);
+  backdrop-filter: blur(24px);
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease,
+    background 300ms ease;
+}
+
+.premium-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(227, 239, 38, 0.28);
+  box-shadow: var(--shadow-strong);
+}
+
+.premium-button {
+  border-radius: 14px;
+  background: var(--gradient-2);
+  color: #06231d;
+  box-shadow: 0 18px 45px rgba(227, 239, 38, 0.18);
+  transition:
+    transform 300ms ease,
+    box-shadow 300ms ease,
+    filter 300ms ease;
+}
+
+.premium-button:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 26px 55px rgba(227, 239, 38, 0.24);
+  filter: saturate(1.05);
+}
+
+.premium-button-secondary {
+  border-radius: 14px;
+  border: 1px solid rgba(227, 239, 38, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 238, 0.08), rgba(255, 253, 238, 0.03)),
+    rgba(12, 52, 44, 0.56);
+  color: var(--foreground);
+  box-shadow: inset 0 1px 0 rgba(255, 253, 238, 0.06);
+  transition:
+    transform 300ms ease,
+    border-color 300ms ease,
+    box-shadow 300ms ease,
+    background 300ms ease;
+}
+
+.premium-button-secondary:hover {
+  transform: translateY(-6px);
+  border-color: rgba(227, 239, 38, 0.34);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 253, 238, 0.08),
+    0 18px 42px rgba(2, 15, 12, 0.24);
+}
+
+.premium-pill {
+  border: 1px solid rgba(227, 239, 38, 0.2);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 238, 0.14), rgba(255, 253, 238, 0.03)),
+    rgba(12, 52, 44, 0.64);
+  backdrop-filter: blur(16px);
+}
+
+.premium-kicker {
+  font-family: var(--font-accent), "Space Grotesk", "Segoe UI", sans-serif;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+}
+
+.premium-separator {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(227, 239, 38, 0.35), transparent);
+}
+
+.premium-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(30px);
+  pointer-events: none;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.nature-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.nature-stage::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -2;
+  background:
+    radial-gradient(circle at 10% 18%, rgba(227, 239, 38, 0.1), transparent 18%),
+    radial-gradient(circle at 84% 14%, rgba(226, 251, 206, 0.06), transparent 16%),
+    radial-gradient(circle at 72% 50%, rgba(7, 102, 83, 0.12), transparent 22%);
+}
+
+.nature-stage::after {
+  content: "";
+  position: absolute;
+  top: 72px;
+  right: -40px;
+  width: min(24vw, 240px);
+  height: min(24vw, 240px);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.14;
+  background: radial-gradient(circle, rgba(227, 239, 38, 0.4), transparent 68%);
+  filter: blur(18px);
+}
+
+.nature-graffiti {
+  position: relative;
+}
+
+.nature-graffiti::before {
+  content: none;
+}
+
+.marketing-hero {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(227, 239, 38, 0.14);
+  background:
+    linear-gradient(135deg, rgba(12, 52, 44, 0.94), rgba(7, 102, 83, 0.78) 44%, rgba(6, 35, 29, 0.98)),
+    linear-gradient(180deg, rgba(255, 253, 238, 0.04), transparent);
+  box-shadow: 0 40px 140px rgba(2, 15, 12, 0.34);
+}
+
+.marketing-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 14% 22%, rgba(255, 253, 238, 0.07), transparent 18%),
+    radial-gradient(circle at 84% 18%, rgba(227, 239, 38, 0.08), transparent 16%),
+    radial-gradient(circle at 70% 82%, rgba(7, 102, 83, 0.16), transparent 24%);
+}
+
+.marketing-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(227, 239, 38, 0.45), transparent) top / 100% 1px no-repeat;
+}
+
+.marketing-kicker {
+  font-family: var(--font-body), "Inter", "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255, 253, 238, 0.82);
+}
+
+.marketing-title {
+  max-width: 14ch;
+  font-family: var(--font-display), "DM Serif Display", Georgia, serif;
+  font-size: clamp(48px, 5.8vw, 76px);
+  line-height: 0.98;
+  letter-spacing: -0.045em;
+  color: #fffdee;
+  text-shadow: 0 8px 36px rgba(2, 15, 12, 0.18);
+  text-wrap: balance;
+}
+
+.marketing-copy {
+  max-width: 48rem;
+  font-family: var(--font-body), "Inter", "Segoe UI", sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.85;
+  color: rgba(255, 253, 238, 0.78);
+}
+
+.marketing-note {
+  border: 1px solid rgba(227, 239, 38, 0.12);
+  background:
+    linear-gradient(135deg, rgba(255, 253, 238, 0.06), rgba(255, 253, 238, 0.02)),
+    rgba(12, 52, 44, 0.62);
+  color: rgba(255, 253, 238, 0.72);
+  box-shadow: inset 0 1px 0 rgba(255, 253, 238, 0.05);
+  backdrop-filter: blur(20px);
+}
+
+.homepage-stage::before {
+  background:
+    radial-gradient(circle at 14% 18%, rgba(227, 239, 38, 0.12), transparent 20%),
+    linear-gradient(90deg, rgba(255, 253, 238, 0.045) 0%, rgba(255, 253, 238, 0) 14%),
+    linear-gradient(90deg, rgba(227, 239, 38, 0.06) 0%, rgba(227, 239, 38, 0) 20%),
+    linear-gradient(90deg, rgba(255, 253, 238, 0.03) 0%, rgba(255, 253, 238, 0) 16%),
+    linear-gradient(90deg, rgba(7, 102, 83, 0.08) 0%, rgba(7, 102, 83, 0) 22%);
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    18% 100%,
+    24% 100%,
+    20% 100%,
+    26% 100%;
+  animation:
+    softPulse 16s ease-in-out infinite,
+    auroraSlide 22s ease-in-out infinite;
+}
+
+.homepage-stage::after {
+  top: 0;
+  right: auto;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 1;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(226, 251, 206, 0.08), transparent 16%),
+    radial-gradient(circle at 82% 72%, rgba(227, 239, 38, 0.08), transparent 18%),
+    linear-gradient(180deg, rgba(255, 253, 238, 0.02), transparent 22%, transparent 78%, rgba(4, 23, 18, 0.16));
+  filter: blur(0);
+  animation: softPulse 18s ease-in-out infinite;
+}
+
+.homepage-hero::before {
+  background:
+    radial-gradient(circle at 12% 20%, rgba(255, 253, 238, 0.08), transparent 18%),
+    radial-gradient(circle at 86% 16%, rgba(227, 239, 38, 0.08), transparent 14%),
+    linear-gradient(90deg, rgba(255, 253, 238, 0.035) 0%, rgba(255, 253, 238, 0) 12%),
+    linear-gradient(90deg, rgba(227, 239, 38, 0.04) 0%, rgba(227, 239, 38, 0) 16%),
+    linear-gradient(90deg, rgba(7, 102, 83, 0.08) 0%, rgba(7, 102, 83, 0) 18%);
+  background-repeat: no-repeat;
+  background-size:
+    100% 100%,
+    100% 100%,
+    18% 100%,
+    22% 100%,
+    24% 100%;
+  background-position:
+    0 0,
+    0 0,
+    12% 0,
+    44% 0,
+    78% 0;
+  animation:
+    softPulse 14s ease-in-out infinite,
+    auroraSlide 20s ease-in-out infinite;
+}
+
+@media (max-width: 900px) {
+  .marketing-title {
+    max-width: 12ch;
+    font-size: clamp(40px, 8vw, 58px);
+  }
+
+  .marketing-copy {
+    font-size: 16px;
+  }
 }

@@ -5,6 +5,9 @@
   "scripts": {
     "dev": "next dev",
     "dev:api": "node backend/server.js",
+    "db:init": "node backend/init-db.js",
+    "db:seed-content": "node backend/seed-content.js",
+    "admin:sql": "node backend/generate-admin-sql.js",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

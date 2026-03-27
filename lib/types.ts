@@ -22,6 +22,9 @@ export type Business = {
   metaDescription: string;
   ogImage: string | null;
   templateId: number | null;
+  templateKey?: string | null;
+  templateName?: string | null;
+  templateAccent?: string | null;
   createdAt: string;
   updatedAt: string;
   services: Service[];

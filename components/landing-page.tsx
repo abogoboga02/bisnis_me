@@ -11,6 +11,26 @@ import type { Business } from "@/lib/types";
 
 export function LandingPage({ business }: { business: Business }) {
   const whatsappHref = business.whatsapp ? `https://wa.me/${business.whatsapp.replace(/\D/g, "")}` : "#";
+  const templateTheme =
+    business.templateKey === "solar-studio"
+      ? {
+          overlay: "bg-[#2c1204]/45",
+          badge: "border-orange-200/20 bg-orange-100/10 text-orange-100/90",
+          primaryButton: "bg-orange-300 text-[#3b1802]",
+          panelAccent: "text-orange-200/80",
+          cardAccent: "bg-orange-300/12 text-orange-100",
+          fallbackBackground:
+            "bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(253,186,116,0.28),_transparent_22%),linear-gradient(135deg,_#2c1204_0%,_#4a1f08_42%,_#120b08_100%)]",
+        }
+      : {
+          overlay: "bg-slate-950/45",
+          badge: "border-white/12 bg-white/5 text-cyan-100/90",
+          primaryButton: "bg-cyan-300 text-slate-950",
+          panelAccent: "text-cyan-100/70",
+          cardAccent: "bg-cyan-300/12 text-cyan-200",
+          fallbackBackground:
+            "bg-[radial-gradient(circle_at_top_left,_rgba(103,232,249,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(192,132,252,0.32),_transparent_22%),linear-gradient(135deg,_#0f172a_0%,_#111827_42%,_#172554_100%)]",
+        };
 
   return (
     <main className="overflow-hidden">
@@ -31,11 +51,11 @@ export function LandingPage({ business }: { business: Business }) {
               unoptimized
             />
           ) : (
-            <div className="h-full w-full bg-[radial-gradient(circle_at_top_left,_rgba(103,232,249,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(192,132,252,0.32),_transparent_22%),linear-gradient(135deg,_#0f172a_0%,_#111827_42%,_#172554_100%)]" />
+            <div className={`h-full w-full ${templateTheme.fallbackBackground}`} />
           )}
         </motion.div>
 
-        <div className="absolute inset-0 -z-10 bg-slate-950/45" />
+        <div className={`absolute inset-0 -z-10 ${templateTheme.overlay}`} />
 
         <div className="mx-auto flex min-h-[92vh] max-w-7xl flex-col justify-between">
           <header className="flex items-center justify-between gap-4 py-4">
@@ -57,8 +77,8 @@ export function LandingPage({ business }: { business: Business }) {
             className="grid gap-10 pb-10 pt-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-end"
           >
             <div className="space-y-6">
-              <span className="inline-flex items-center rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm text-cyan-100/90">
-                Modern landing page experience
+              <span className={`inline-flex items-center rounded-full border px-4 py-2 text-sm ${templateTheme.badge}`}>
+                {business.templateName ?? "Business template"}
               </span>
               <div className="space-y-5">
                 <h1 className="max-w-4xl font-display text-5xl font-bold tracking-tight text-white md:text-7xl">
@@ -70,7 +90,7 @@ export function LandingPage({ business }: { business: Business }) {
                 <motion.a
                   href={business.heroCtaUrl}
                   whileHover={{ scale: 1.03, boxShadow: "0 0 28px rgba(103, 232, 249, 0.4)" }}
-                  className="rounded-full bg-cyan-300 px-6 py-3 font-semibold text-slate-950"
+                  className={`rounded-full px-6 py-3 font-semibold ${templateTheme.primaryButton}`}
                 >
                   {business.heroCtaLabel}
                 </motion.a>
@@ -92,7 +112,7 @@ export function LandingPage({ business }: { business: Business }) {
               transition={{ duration: 0.85, delay: 0.15 }}
               className="glass-panel rounded-[2rem] p-7"
             >
-              <p className="text-sm uppercase tracking-[0.3em] text-cyan-100/70">About the business</p>
+              <p className={`text-sm uppercase tracking-[0.3em] ${templateTheme.panelAccent}`}>About the business</p>
               <p className="mt-5 text-base leading-8 text-slate-100">{business.description}</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
@@ -127,7 +147,7 @@ export function LandingPage({ business }: { business: Business }) {
                 whileHover={{ y: -10 }}
                 className="glass-panel rounded-[1.75rem] p-6"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cyan-300/12 text-cyan-200">
+                <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${templateTheme.cardAccent}`}>
                   <Icon className="h-6 w-6" />
                 </div>
                 <h3 className="mt-5 text-xl font-semibold text-white">{service.name}</h3>

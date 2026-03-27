@@ -4,6 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "node server.js",
+    "db:init": "node init-db.js",
+    "db:seed-content": "node seed-content.js",
+    "admin:sql": "node generate-admin-sql.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

@@ -1,13 +1,10 @@
-import { AdminAuthGuard } from "@/components/admin-auth-guard";
 import { AdminDashboard } from "@/components/admin-dashboard";
+import { requireAdminSession } from "@/lib/admin-session";
 import { getBusinesses, getTemplates } from "@/lib/api";
 
 export default async function AdminDashboardPage() {
+  await requireAdminSession();
   const [businesses, templates] = await Promise.all([getBusinesses(), getTemplates()]);
 
-  return (
-    <AdminAuthGuard>
-      <AdminDashboard businesses={businesses} templates={templates} />
-    </AdminAuthGuard>
-  );
+  return <AdminDashboard businesses={businesses} templates={templates} />;
 }
