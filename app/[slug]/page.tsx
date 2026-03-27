@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { LandingPage } from "@/components/landing-page";
 import { getBusinessBySlug } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+export const dynamicParams = true;
+
 export async function generateMetadata({
   params,
 }: {

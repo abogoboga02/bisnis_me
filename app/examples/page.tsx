@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { MarketingNav } from "@/components/marketing-nav";
-import { showcaseSites } from "@/lib/marketing-content";
 import { getBusinesses } from "@/lib/api";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Contoh Website Bisnis",
@@ -44,27 +45,6 @@ export default async function ExamplesPage() {
         </div>
       </section>
 
-      <section className="mx-auto mt-8 max-w-7xl">
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {showcaseSites.map((site) => (
-            <article
-              key={site.url}
-              className="premium-card rounded-[1.75rem] p-5"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-semibold text-[#fffdee]">{site.name}</h2>
-                  <p className="mt-2 text-sm text-[#fffdee]/52">{site.type}</p>
-                </div>
-                <ArrowRight className="mt-1 h-5 w-5 shrink-0 text-[#e3ef26]" />
-              </div>
-              <p className="mt-5 text-sm text-[#fffdee]/52">Contoh URL</p>
-              <p className="mt-1 break-all text-sm leading-7 text-[#e2fbce]">{site.url}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
       <section className="mx-auto mt-8 max-w-7xl pb-10">
         <div className="glass-panel rounded-[2rem] border border-[#e3ef26]/14 p-6 md:p-8">
           <p className="marketing-kicker">Website aktif</p>
@@ -86,6 +66,8 @@ export default async function ExamplesPage() {
                   </div>
                   <ArrowUpRight className="mt-1 h-5 w-5 shrink-0 text-[#e3ef26]" />
                 </div>
+                <p className="mt-5 text-sm text-[#fffdee]/52">Contoh URL</p>
+                <p className="mt-1 break-all text-sm leading-7 text-[#e2fbce]">/{business.slug}</p>
               </Link>
             ))}
           </div>

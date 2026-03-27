@@ -4,6 +4,8 @@ import { MarketingNav } from "@/components/marketing-nav";
 import { templateCatalog } from "@/lib/marketing-content";
 import { getTemplates } from "@/lib/api";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Template Website Bisnis",
   description:
