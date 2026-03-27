@@ -1,6 +1,6 @@
 import "server-only";
 
-import type { Business, Service } from "@/lib/types";
+import type { Business, Service, Template } from "@/lib/types";
 import { verifyPassword } from "@/lib/password";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -79,6 +79,18 @@ function mapServiceRow(row: ServiceRow): Service {
     name: row.name,
     description: row.description ?? "",
     icon: row.icon ?? "sparkles",
+  };
+}
+
+function mapTemplateRow(row: TemplateRow): Template {
+  return {
+    id: row.id,
+    name: row.name,
+    key: row.key,
+    description: row.description ?? "",
+    accent: row.accent,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
   };
 }
 
@@ -208,6 +220,20 @@ async function getTemplateById(templateId: number | null) {
   return (data as TemplateRow | null) ?? null;
 }
 
+export async function listTemplatesFromDatabase() {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("templates")
+    .select("id, name, key, description, accent, created_at, updated_at")
+    .order("id", { ascending: true });
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  return ((data as TemplateRow[] | null) ?? []).map(mapTemplateRow);
+}
+
 async function getServicesByBusinessId(businessId: number) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -222,6 +248,64 @@ async function getServicesByBusinessId(businessId: number) {
   }
 
   return (data as ServiceRow[] | null) ?? [];
+}
+
+export async function listBusinessesFromDatabase() {
+  const supabase = getSupabaseAdmin();
+  const [{ data: businessData, error: businessError }, { data: serviceData, error: serviceError }, templates] =
+    await Promise.all([
+      supabase
+        .from("businesses")
+        .select(
+          "id, slug, name, tagline, description, hero_image, hero_cta_label, hero_cta_url, phone, whatsapp, address, meta_title, meta_description, og_image, template_id, created_at, updated_at",
+        )
+        .order("id", { ascending: true }),
+      supabase
+        .from("services")
+        .select("id, business_id, name, description, icon, sort_order")
+        .order("business_id", { ascending: true })
+        .order("sort_order", { ascending: true })
+        .order("id", { ascending: true }),
+      listTemplatesFromDatabase(),
+    ]);
+
+  if (businessError) {
+    throwSupabaseError(500, businessError.message);
+  }
+
+  if (serviceError) {
+    throwSupabaseError(500, serviceError.message);
+  }
+
+  const servicesByBusinessId = new Map<number, ServiceRow[]>();
+  for (const service of (serviceData as ServiceRow[] | null) ?? []) {
+    const current = servicesByBusinessId.get(service.business_id) ?? [];
+    current.push(service);
+    servicesByBusinessId.set(service.business_id, current);
+  }
+
+  const templatesById = new Map<number, Template>();
+  for (const template of templates) {
+    templatesById.set(template.id, template);
+  }
+
+  return ((businessData as BusinessRow[] | null) ?? []).map((row) =>
+    mapBusinessRow(
+      row,
+      servicesByBusinessId.get(row.id) ?? [],
+      row.template_id
+        ? ({
+            id: templatesById.get(row.template_id)?.id,
+            name: templatesById.get(row.template_id)?.name,
+            key: templatesById.get(row.template_id)?.key,
+            description: templatesById.get(row.template_id)?.description ?? "",
+            accent: templatesById.get(row.template_id)?.accent ?? null,
+            created_at: templatesById.get(row.template_id)?.createdAt ?? row.created_at,
+            updated_at: templatesById.get(row.template_id)?.updatedAt ?? row.updated_at,
+          } as TemplateRow)
+        : null,
+    ),
+  );
 }
 
 export async function getBusinessByIdForAdmin(id: number) {
@@ -244,6 +328,37 @@ export async function getBusinessByIdForAdmin(id: number) {
 
   const [services, template] = await Promise.all([
     getServicesByBusinessId(id),
+    getTemplateById((data as BusinessRow).template_id),
+  ]);
+
+  return mapBusinessRow(data as BusinessRow, services, template);
+}
+
+export async function getBusinessBySlugFromDatabase(slug: string) {
+  const normalizedSlug = slug.trim().toLowerCase();
+  if (!normalizedSlug) {
+    return null;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(
+      "id, slug, name, tagline, description, hero_image, hero_cta_label, hero_cta_url, phone, whatsapp, address, meta_title, meta_description, og_image, template_id, created_at, updated_at",
+    )
+    .eq("slug", normalizedSlug)
+    .maybeSingle();
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  if (!data) {
+    return null;
+  }
+
+  const [services, template] = await Promise.all([
+    getServicesByBusinessId(data.id),
     getTemplateById((data as BusinessRow).template_id),
   ]);
 

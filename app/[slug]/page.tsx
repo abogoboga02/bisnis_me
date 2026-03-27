@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getBusinessBySlugFromDatabase } from "@/lib/business-store";
 import { LandingPage } from "@/components/landing-page";
-import { getBusinessBySlug } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 export const dynamicParams = true;
@@ -12,7 +12,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const business = await getBusinessBySlug(slug);
+  const business = await getBusinessBySlugFromDatabase(slug);
 
   if (!business) {
     return {
@@ -38,7 +38,7 @@ export default async function BusinessSlugPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const business = await getBusinessBySlug(slug);
+  const business = await getBusinessBySlugFromDatabase(slug);
 
   if (!business) {
     notFound();

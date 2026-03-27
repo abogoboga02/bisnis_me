@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { MarketingNav } from "@/components/marketing-nav";
-import { getBusinesses } from "@/lib/api";
+import { listBusinessesFromDatabase } from "@/lib/business-store";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ExamplesPage() {
-  const businesses = await getBusinesses();
+  const businesses = await listBusinessesFromDatabase();
   const previewBusiness = businesses[0];
 
   return (

@@ -20,7 +20,6 @@ import {
   testimonials,
   problemIcon as ProblemIcon,
 } from "@/lib/marketing-content";
-import { getBusinesses, getTemplates } from "@/lib/api";
 import type { Business, Template } from "@/lib/types";
 
 export default function HomePage() {
@@ -31,12 +30,20 @@ export default function HomePage() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const [businessesData, templatesData] = await Promise.all([
-          getBusinesses(),
-          getTemplates(),
+        const [businessesResponse, templatesResponse] = await Promise.all([
+          fetch("/api/public/businesses", { cache: "no-store" }),
+          fetch("/api/public/templates", { cache: "no-store" }),
         ]);
-        setBusinesses(businessesData);
-        setTemplates(templatesData);
+
+        if (!businessesResponse.ok || !templatesResponse.ok) {
+          throw new Error("Failed to fetch live data.");
+        }
+
+        const businessesPayload = (await businessesResponse.json()) as { data?: Business[] };
+        const templatesPayload = (await templatesResponse.json()) as { data?: Template[] };
+
+        setBusinesses(businessesPayload.data ?? []);
+        setTemplates(templatesPayload.data ?? []);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { TemplateCatalogBrowser } from "@/components/template-catalog-browser";
 import { MarketingNav } from "@/components/marketing-nav";
 import { templateCatalog } from "@/lib/marketing-content";
-import { getTemplates } from "@/lib/api";
+import { listTemplatesFromDatabase } from "@/lib/business-store";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const liveTemplates = await getTemplates();
+  const liveTemplates = await listTemplatesFromDatabase();
 
   return (
     <main className="nature-stage min-h-screen px-6 py-8 md:px-10 lg:px-16">
