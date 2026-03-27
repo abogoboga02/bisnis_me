@@ -5,12 +5,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { MapPin, MessageCircle, Phone } from "lucide-react";
 import { AnimatedSection } from "@/components/animated-section";
+import { AtelierMosaicPage } from "@/components/atelier-mosaic-page";
 import { FloatingWhatsApp } from "@/components/floating-whatsapp";
 import { iconMap } from "@/lib/icon-map";
 import type { Business } from "@/lib/types";
 
 export function LandingPage({ business }: { business: Business }) {
   const whatsappHref = business.whatsapp ? `https://wa.me/${business.whatsapp.replace(/\D/g, "")}` : "#";
+  if (business.templateKey === "atelier-mosaic") {
+    return <AtelierMosaicPage business={business} whatsappHref={whatsappHref} />;
+  }
+
   const templateTheme =
     business.templateKey === "solar-studio"
       ? {

@@ -151,6 +151,14 @@ export const templateCatalog: MarketingTemplate[] = [
     feature: "Profil personal, layanan, pencapaian, dan ajakan booking konsultasi.",
     accent: "#a78bfa",
   },
+  {
+    name: "Atelier Mosaic Story",
+    category: "personal-brand",
+    categoryLabel: "Personal Brand",
+    fit: "Personal brand premium, studio kreatif, brand consultant, boutique service",
+    feature: "Hero editorial, about spread, service narrative, testimoni, galeri, dan contact finale.",
+    accent: "#c86f4d",
+  },
 ];
 
 export const platformFeatures: Array<{ icon: LucideIcon; title: string; copy: string }> = [

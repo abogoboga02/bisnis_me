@@ -11,6 +11,12 @@ const seedTemplates = [
     description: "Warm editorial look for food, retail, and hospitality brands.",
     accent: "#f97316",
   },
+  {
+    name: "Atelier Mosaic",
+    key: "atelier-mosaic",
+    description: "Editorial storytelling layout with testimonials, gallery, and golden-ratio rhythm.",
+    accent: "#c86f4d",
+  },
 ];
 
 const seedBusinesses = [
