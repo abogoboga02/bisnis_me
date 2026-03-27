@@ -5,8 +5,8 @@ import { listTemplatesFromDatabase } from "@/lib/business-store";
 export const dynamic = "force-dynamic";
 
 export default async function AdminTemplatesPage() {
-  await requireAdminSession();
-  const templates = await listTemplatesFromDatabase();
+  const admin = await requireAdminSession();
+  const templates = await listTemplatesFromDatabase(admin);
 
-  return <TemplateGallery templates={templates} />;
+  return <TemplateGallery currentAdmin={admin} templates={templates} />;
 }

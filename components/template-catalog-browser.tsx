@@ -1,20 +1,33 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import { LayoutTemplate } from "lucide-react";
-import type { MarketingTemplate, TemplateCategory } from "@/lib/marketing-content";
+import type { Template } from "@/lib/types";
 
-export function TemplateCatalogBrowser({ templates }: { templates: MarketingTemplate[] }) {
-  const [activeFilter, setActiveFilter] = useState<TemplateCategory | "all">("all");
-  const filterOptions: Array<{ label: string; value: TemplateCategory | "all" }> = [
-    { label: "Semua", value: "all" },
-    { label: "Company Profile", value: "company-profile" },
-    { label: "Travel", value: "travel" },
-    { label: "Restoran", value: "restoran" },
-    { label: "Jasa", value: "jasa" },
-    { label: "Toko Online", value: "toko-online" },
-    { label: "Personal Brand", value: "personal-brand" },
-  ];
+export function TemplateCatalogBrowser({ templates }: { templates: Template[] }) {
+  const [activeFilter, setActiveFilter] = useState<string>("all");
+  const filterOptions = useMemo(
+    () => [
+      { label: "Semua", value: "all" },
+      ...templates.reduce<Array<{ label: string; value: string }>>((result, template) => {
+        if (!template.category) {
+          return result;
+        }
+
+        if (result.some((item) => item.value === template.category)) {
+          return result;
+        }
+
+        result.push({
+          label: template.categoryLabel || template.category,
+          value: template.category,
+        });
+        return result;
+      }, []),
+    ],
+    [templates],
+  );
 
   const filteredTemplates = useMemo(() => {
     if (activeFilter === "all") {
@@ -50,15 +63,20 @@ export function TemplateCatalogBrowser({ templates }: { templates: MarketingTemp
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {filteredTemplates.map((template) => (
           <article
-            key={template.name}
+            key={template.id}
             className="premium-card rounded-[1.75rem] p-5"
           >
-            <div className="flex items-center justify-between gap-3">
-              <span
-                className="premium-kicker rounded-[14px] px-3 py-1.5 text-[11px] font-semibold text-[#06231d]"
-                style={{ backgroundImage: `linear-gradient(135deg, ${template.accent}, #E3EF26)` }}
-              >
-                {template.categoryLabel}
+            <div className="overflow-hidden rounded-[1.4rem] border border-[#e3ef26]/14 bg-[linear-gradient(135deg,rgba(226,251,206,0.18),rgba(227,239,38,0.14),rgba(7,102,83,0.2),rgba(6,35,29,0.72))]">
+              {template.previewImage ? (
+                <Image src={template.previewImage} alt={template.name} width={1200} height={720} unoptimized className="aspect-video w-full object-cover" />
+              ) : (
+                <div className="flex aspect-video items-center justify-center text-sm text-[#fffdee]/62">Preview Image</div>
+              )}
+            </div>
+
+            <div className="mt-5 flex items-center justify-between gap-3">
+              <span className="premium-kicker rounded-[14px] px-3 py-1.5 text-[11px] font-semibold text-[#06231d]" style={{ backgroundImage: `linear-gradient(135deg, ${template.accent ?? "#67e8f9"}, #E3EF26)` }}>
+                {template.categoryLabel || template.category}
               </span>
               <LayoutTemplate className="h-5 w-5 text-[#e3ef26]" />
             </div>

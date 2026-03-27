@@ -12,7 +12,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const business = await createBusinessRecord(body);
+    const business = await createBusinessRecord(body, session);
     return NextResponse.json({ data: business });
   } catch (error) {
     const appError = error as AppError;

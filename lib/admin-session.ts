@@ -4,6 +4,7 @@ import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { NextResponse } from "next/server";
+import type { AdminIdentity, AdminRole } from "@/lib/types";
 
 const ADMIN_SESSION_COOKIE = "admin_session";
 const SESSION_MAX_AGE = 60 * 60 * 12;
@@ -12,20 +13,15 @@ type AdminSessionPayload = {
   id: number;
   email: string;
   name: string;
+  role: AdminRole;
   exp: number;
 };
 
-type AdminIdentity = {
-  id: number;
-  email: string;
-  name: string;
-};
-
 function getSessionSecret() {
-  const secret = process.env.ADMIN_SESSION_SECRET || process.env.INTERNAL_API_KEY;
+  const secret = process.env.ADMIN_SESSION_SECRET;
 
   if (!secret) {
-    throw new Error("ADMIN_SESSION_SECRET atau INTERNAL_API_KEY wajib diisi.");
+    throw new Error("ADMIN_SESSION_SECRET wajib diisi.");
   }
 
   return secret;
@@ -78,7 +74,12 @@ export function verifyAdminSessionValue(rawValue: string | undefined | null) {
 
   try {
     const payload = JSON.parse(decodeBase64Url(encodedPayload)) as AdminSessionPayload;
-    if (!payload?.email || !payload?.id || payload.exp <= Math.floor(Date.now() / 1000)) {
+    if (
+      !payload?.email ||
+      !payload?.id ||
+      !payload?.role ||
+      payload.exp <= Math.floor(Date.now() / 1000)
+    ) {
       return null;
     }
 

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { TemplateCatalogBrowser } from "@/components/template-catalog-browser";
 import { MarketingNav } from "@/components/marketing-nav";
-import { templateCatalog } from "@/lib/marketing-content";
 import { listTemplatesFromDatabase } from "@/lib/business-store";
 
 export const dynamic = "force-dynamic";
@@ -40,7 +39,7 @@ export default async function TemplatesPage() {
 
       <section className="mx-auto mt-8 max-w-7xl">
         <div className="glass-panel rounded-[2rem] border border-[#e3ef26]/14 p-6 md:p-8">
-          <TemplateCatalogBrowser templates={templateCatalog} />
+          <TemplateCatalogBrowser templates={liveTemplates} />
         </div>
       </section>
     </main>

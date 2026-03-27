@@ -1,9 +1,10 @@
 "use client";
 
-import type { Business } from "@/lib/types";
+import type { AdminIdentity, Business } from "@/lib/types";
 
 const API_BASE_PATH = "/api/business";
 const ADMIN_LOGIN_PATH = "/api/admin/login";
+const ADMIN_LOGOUT_PATH = "/api/admin/logout";
 
 async function parseErrorMessage(response: Response, fallbackMessage: string) {
   try {
@@ -56,11 +57,7 @@ export async function deleteBusinessById(id: number) {
 
 type AdminLoginPayload = {
   data: {
-    admin: {
-      id: number;
-      email: string;
-      name: string;
-    };
+    admin: AdminIdentity;
   };
 };
 
@@ -83,6 +80,22 @@ export async function loginAdmin(email: string, password: string) {
 
   const payload = (await response.json()) as AdminLoginPayload;
   return payload.data.admin;
+}
+
+export async function logoutAdmin() {
+  let response: Response;
+  try {
+    response = await fetch(ADMIN_LOGOUT_PATH, {
+      method: "POST",
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the admin logout API");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to sign out"));
+  }
 }
 
 export async function uploadAdminImage(file: File) {

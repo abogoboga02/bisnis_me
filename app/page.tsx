@@ -6,19 +6,9 @@ import { motion } from "framer-motion";
 import { ArrowRight, ArrowUpRight, CheckCircle2, LayoutTemplate, MonitorSmartphone, Sparkles } from "lucide-react";
 import { MarketingNav } from "@/components/marketing-nav";
 import {
-  commonProblems,
-  faqItems,
   finalCta,
   heroBenefits,
   howItWorks,
-  platformFeatures,
-  pricingPlans,
-  showcaseSites,
-  socialProofStats,
-  solutionBenefits,
-  templateCatalog,
-  testimonials,
-  problemIcon as ProblemIcon,
 } from "@/lib/marketing-content";
 import type { Business, Template } from "@/lib/types";
 
@@ -53,8 +43,6 @@ export default function HomePage() {
 
     fetchData();
   }, []);
-
-  const previewBusiness = businesses[0];
 
   return (
     <main className="nature-stage homepage-stage min-h-screen overflow-hidden px-5 py-6 md:px-8 md:py-8 lg:px-12 lg:py-10">
@@ -247,7 +235,9 @@ export default function HomePage() {
                       <p className="text-sm text-[#fffdee]/54">Template aktif</p>
                       <p className="mt-2 text-[42px] font-semibold leading-none text-[#fffdee]">{templates.length}</p>
                       <p className="mt-3 text-sm leading-6 text-[#fffdee]/68">
-                        Siap dipakai untuk berbagai kebutuhan bisnis dan promosi online.
+                        {isLoading
+                          ? "Memuat data template dan website aktif dari database..."
+                          : `${businesses.length} website aktif sudah tersimpan di database.`}
                       </p>
                     </motion.div>
 
@@ -403,9 +393,9 @@ export default function HomePage() {
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {templateCatalog.map((template, idx) => (
+          {templates.map((template, idx) => (
             <motion.article
-              key={template.name}
+              key={template.id}
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: idx * 0.1 }}
@@ -417,18 +407,21 @@ export default function HomePage() {
                 className="mb-5 flex aspect-video items-center justify-center rounded-[22px] border border-[#e3ef26]/14 bg-[linear-gradient(135deg,rgba(226,251,206,0.18),rgba(227,239,38,0.14),rgba(7,102,83,0.2),rgba(6,35,29,0.72))]"
                 whileHover={{ scale: 1.05 }}
               >
-                <span className="text-sm font-medium text-[#fffdee]/62">Preview Image</span>
+                <span className="px-6 text-center text-sm font-medium text-[#fffdee]/62">
+                  {template.previewImage ? "Preview image tersedia di database" : "Preview image belum diisi"}
+                </span>
               </motion.div>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span
                   className="premium-kicker rounded-[14px] px-3 py-1.5 text-[11px] font-bold text-[#06231d]"
-                  style={{ backgroundImage: `linear-gradient(135deg, ${template.accent}, #E3EF26)` }}
+                  style={{ backgroundImage: `linear-gradient(135deg, ${template.accent ?? "#67e8f9"}, #E3EF26)` }}
                 >
-                  {template.categoryLabel}
+                  {template.categoryLabel || template.category}
                 </span>
                 <LayoutTemplate className="h-5 w-5 text-[#e3ef26]" />
               </div>
               <h3 className="text-[26px] font-semibold text-[#fffdee]">{template.name}</h3>
+              <p className="mt-3 text-sm leading-7 text-[#fffdee]/72">{template.feature || template.description}</p>
             </motion.article>
           ))}
         </div>

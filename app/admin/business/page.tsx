@@ -5,11 +5,11 @@ import { listBusinessesFromDatabase, listTemplatesFromDatabase } from "@/lib/bus
 export const dynamic = "force-dynamic";
 
 export default async function AdminBusinessPage() {
-  await requireAdminSession();
+  const admin = await requireAdminSession();
   const [businesses, templates] = await Promise.all([
-    listBusinessesFromDatabase(),
-    listTemplatesFromDatabase(),
+    listBusinessesFromDatabase(admin),
+    listTemplatesFromDatabase(admin),
   ]);
 
-  return <BusinessManager initialBusinesses={businesses} templates={templates} />;
+  return <BusinessManager currentAdmin={admin} initialBusinesses={businesses} templates={templates} />;
 }

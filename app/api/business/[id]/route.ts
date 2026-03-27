@@ -21,7 +21,7 @@ export async function PUT(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Business ID tidak valid." }, { status: 400 });
     }
 
-    const business = await updateBusinessRecord(businessId, await request.json());
+    const business = await updateBusinessRecord(businessId, await request.json(), session);
 
     if (!business) {
       return NextResponse.json({ error: "Business not found." }, { status: 404 });
@@ -50,7 +50,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       return NextResponse.json({ error: "Business ID tidak valid." }, { status: 400 });
     }
 
-    const deleted = await deleteBusinessRecord(businessId);
+    const deleted = await deleteBusinessRecord(businessId, session);
 
     if (!deleted) {
       return NextResponse.json({ error: "Business not found." }, { status: 404 });
