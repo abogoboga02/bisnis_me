@@ -12,7 +12,14 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  const liveTemplates = await listTemplatesFromDatabase();
+  let liveTemplates = await Promise.resolve([] as Awaited<ReturnType<typeof listTemplatesFromDatabase>>);
+  let dataError = "";
+
+  try {
+    liveTemplates = await listTemplatesFromDatabase();
+  } catch (error) {
+    dataError = error instanceof Error ? error.message : "Gagal memuat template dari database.";
+  }
 
   return (
     <main className="nature-stage min-h-screen px-6 py-8 md:px-10 lg:px-16">
@@ -39,6 +46,11 @@ export default async function TemplatesPage() {
 
       <section className="mx-auto mt-8 max-w-7xl">
         <div className="glass-panel rounded-[2rem] border border-[#e3ef26]/14 p-6 md:p-8">
+          {dataError ? (
+            <div className="mb-6 rounded-[1.5rem] border border-amber-200/20 bg-amber-100/10 px-5 py-4 text-sm leading-7 text-amber-100">
+              {dataError}
+            </div>
+          ) : null}
           <TemplateCatalogBrowser templates={liveTemplates} />
         </div>
       </section>

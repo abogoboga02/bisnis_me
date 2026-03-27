@@ -13,7 +13,15 @@ export const metadata: Metadata = {
 };
 
 export default async function ExamplesPage() {
-  const businesses = await listBusinessesFromDatabase();
+  let businesses = await Promise.resolve([] as Awaited<ReturnType<typeof listBusinessesFromDatabase>>);
+  let dataError = "";
+
+  try {
+    businesses = await listBusinessesFromDatabase();
+  } catch (error) {
+    dataError = error instanceof Error ? error.message : "Gagal memuat data examples dari database.";
+  }
+
   const previewBusiness = businesses[0];
 
   return (
@@ -51,6 +59,12 @@ export default async function ExamplesPage() {
           <h2 className="mt-3 font-display text-[42px] font-semibold leading-[1.04] text-[#fffdee]">
             Preview bisnis yang sudah tersedia di sistem
           </h2>
+
+          {dataError ? (
+            <div className="mt-6 rounded-[1.5rem] border border-amber-200/20 bg-amber-100/10 px-5 py-4 text-sm leading-7 text-amber-100">
+              {dataError}
+            </div>
+          ) : null}
 
           <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {businesses.map((business) => (

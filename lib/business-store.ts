@@ -158,6 +158,13 @@ function normalizeSupabaseErrorMessage(message: string) {
     return "Schema Supabase belum aktif untuk API. Tambahkan schema bisnis_me ke Exposed schemas di Supabase.";
   }
 
+  if (
+    (message.includes("column") && message.includes("does not exist")) ||
+    (message.includes("relation") && message.includes("does not exist"))
+  ) {
+    return "Schema database belum di-upgrade. Jalankan database/supabase-content-role-upgrade.sql di Supabase SQL Editor.";
+  }
+
   return message;
 }
 
