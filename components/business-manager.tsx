@@ -107,6 +107,7 @@ export function BusinessManager({
   initialBusinesses: Business[];
   templates: Template[];
 }) {
+  const usesSupabaseStorage = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
   const [businesses, setBusinesses] = useState(initialBusinesses);
   const [selectedId, setSelectedId] = useState(initialBusinesses[0]?.id ?? 0);
   const [draft, setDraft] = useState<Business>(
@@ -336,9 +337,13 @@ export function BusinessManager({
             </div>
             <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">Storage Strategy</p>
-              <p className="mt-3 text-lg font-semibold text-white">File path only in database</p>
+              <p className="mt-3 text-lg font-semibold text-white">
+                {usesSupabaseStorage ? "Supabase Storage + URL in database" : "File path only in database"}
+              </p>
               <p className="mt-1 text-sm text-slate-400">
-                Gambar disimpan ke folder lokal, database hanya menyimpan path. Ini paling ringan untuk mobile dan query list.
+                {usesSupabaseStorage
+                  ? "Di Vercel gambar akan di-upload ke Supabase Storage, lalu database hanya menyimpan URL publiknya."
+                  : "Di lokal gambar disimpan ke folder public/uploads/businesses, database hanya menyimpan path."}
               </p>
             </div>
           </div>
@@ -416,7 +421,11 @@ export function BusinessManager({
                 className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950"
               />
               <p className="mt-2 text-xs text-slate-400">
-                {uploadTarget === "heroImage" ? "Uploading hero image..." : "Upload via AJAX aman, file disimpan ke public/uploads/businesses."}
+                {uploadTarget === "heroImage"
+                  ? "Uploading hero image..."
+                  : usesSupabaseStorage
+                    ? "Upload via AJAX aman, file disimpan ke Supabase Storage."
+                    : "Upload via AJAX aman, file disimpan ke public/uploads/businesses."}
               </p>
             </Field>
             <Field label="Meta title">

@@ -127,6 +127,10 @@ function assertSupabaseResult<T>(data: T, error: { message: string } | null, con
   return data;
 }
 
+function logReadError(context: string, error: unknown) {
+  console.error(`[data-read] ${context}`, error);
+}
+
 async function getTemplatesFromSupabase(): Promise<Template[]> {
   const { data, error } = await supabase
     .from("templates")
@@ -244,7 +248,12 @@ async function getBusinessBySlugFromSupabase(slug: string): Promise<Business | n
 
 export async function getBusinesses(): Promise<Business[]> {
   if (hasSupabaseConfig()) {
-    return getBusinessesFromSupabase();
+    try {
+      return await getBusinessesFromSupabase();
+    } catch (error) {
+      logReadError("getBusinessesFromSupabase", error);
+      return [];
+    }
   }
 
   const payload = await fetchJson<{ data: Business[] }>("/api/businesses");
@@ -253,7 +262,12 @@ export async function getBusinesses(): Promise<Business[]> {
 
 export async function getBusinessBySlug(slug: string): Promise<Business | null> {
   if (hasSupabaseConfig()) {
-    return getBusinessBySlugFromSupabase(slug);
+    try {
+      return await getBusinessBySlugFromSupabase(slug);
+    } catch (error) {
+      logReadError(`getBusinessBySlugFromSupabase:${slug}`, error);
+      return null;
+    }
   }
 
   try {
@@ -270,7 +284,12 @@ export async function getBusinessBySlug(slug: string): Promise<Business | null> 
 
 export async function getTemplates(): Promise<Template[]> {
   if (hasSupabaseConfig()) {
-    return getTemplatesFromSupabase();
+    try {
+      return await getTemplatesFromSupabase();
+    } catch (error) {
+      logReadError("getTemplatesFromSupabase", error);
+      return [];
+    }
   }
 
   const payload = await fetchJson<{ data: Template[] }>("/api/templates");
