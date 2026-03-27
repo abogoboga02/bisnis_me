@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase-config";
 import type { Business, Service, Template } from "@/lib/types";
 
 const API_URL = process.env.API_BASE_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -43,7 +44,7 @@ type BusinessRow = {
 };
 
 function hasSupabaseConfig() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
+  return Boolean(getSupabaseUrl() && getSupabaseAnonKey());
 }
 
 async function fetchJson<T>(path: string): Promise<T> {
