@@ -8,16 +8,31 @@ async function upsertTemplates(client) {
   for (const template of seedTemplates) {
     const result = await client.query(
       `
-      INSERT INTO templates (name, key, description, accent)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO templates (name, key, description, accent, category, category_label, fit, feature, preview_image)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (key) DO UPDATE
       SET name = EXCLUDED.name,
           description = EXCLUDED.description,
           accent = EXCLUDED.accent,
+          category = EXCLUDED.category,
+          category_label = EXCLUDED.category_label,
+          fit = EXCLUDED.fit,
+          feature = EXCLUDED.feature,
+          preview_image = EXCLUDED.preview_image,
           updated_at = NOW()
       RETURNING id, key
       `,
-      [template.name, template.key, template.description, template.accent],
+      [
+        template.name,
+        template.key,
+        template.description,
+        template.accent,
+        template.category,
+        template.categoryLabel,
+        template.fit,
+        template.feature,
+        template.previewImage,
+      ],
     );
 
     templateIdByKey.set(result.rows[0].key, result.rows[0].id);

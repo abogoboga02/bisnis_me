@@ -1,19 +1,41 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 import { ChevronDown, ExternalLink, Plus, Search, Trash2, X } from "lucide-react";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
-import type { AdminIdentity, Business, GalleryItem, Service, Template, Testimonial } from "@/lib/types";
 import { deleteBusinessById, saveBusiness, uploadAdminImage } from "@/lib/client-api";
 import { iconOptions } from "@/lib/icon-map";
+import { applyTemplateDefaults, getTemplateFormConfig } from "@/lib/template-form-config";
+import type { AdminIdentity, Business, GalleryItem, Service, Template, Testimonial } from "@/lib/types";
 
 type Notice = { type: "success" | "error" | "info"; message: string };
+type ArrayFieldKey = "services" | "testimonials" | "galleryItems";
+type ImageTarget = "heroImage" | "ogImage" | `gallery-${number}`;
 
-const emptyService = (): Service => ({ id: Date.now(), businessId: 0, name: "", description: "", icon: "sparkles" });
-const emptyTestimonial = (): Testimonial => ({ id: Date.now(), businessId: 0, name: "", role: "", quote: "", sortOrder: 0 });
-const emptyGalleryItem = (): GalleryItem => ({ id: Date.now(), businessId: 0, title: "", caption: "", imageUrl: "", sortOrder: 0 });
+function localId() {
+  return Date.now() + Math.floor(Math.random() * 100_000);
+}
+
+const emptyService = (): Service => ({ id: localId(), businessId: 0, name: "", description: "", icon: "sparkles" });
+const emptyTestimonial = (sortOrder = 0): Testimonial => ({
+  id: localId(),
+  businessId: 0,
+  name: "",
+  role: "",
+  quote: "",
+  sortOrder,
+});
+const emptyGalleryItem = (sortOrder = 0): GalleryItem => ({
+  id: localId(),
+  businessId: 0,
+  title: "",
+  caption: "",
+  imageUrl: "",
+  sortOrder,
+});
 
 const emptyBusiness = (): Business => ({
   id: 0,
@@ -52,30 +74,75 @@ const emptyBusiness = (): Business => ({
   galleryItems: [emptyGalleryItem()],
 });
 
-function validateDraft(draft: Business) {
+function hydrateDraft(draft: Business, template: Template | null) {
+  const config = getTemplateFormConfig(template?.key);
+  const withTemplate = {
+    ...draft,
+    templateId: template?.id ?? null,
+    templateKey: template?.key ?? null,
+    templateName: template?.name ?? null,
+    templateAccent: template?.accent ?? null,
+  };
+  const next = applyTemplateDefaults(withTemplate, template?.key);
+  const testimonials =
+    next.testimonials.length > 0 ? next.testimonials.map((item, index) => ({ ...item, sortOrder: index })) : [emptyTestimonial()];
+  const galleryItems =
+    next.galleryItems.length > 0 ? next.galleryItems.map((item, index) => ({ ...item, sortOrder: index })) : [emptyGalleryItem()];
+
+  return {
+    ...next,
+    services: next.services.length > 0 ? next.services : [emptyService()],
+    testimonials: config?.fixedTestimonialCount
+      ? Array.from({ length: config.fixedTestimonialCount }, (_, index) => testimonials[index] ?? emptyTestimonial(index))
+      : testimonials,
+    galleryItems: config?.fixedGalleryCount
+      ? Array.from({ length: config.fixedGalleryCount }, (_, index) => galleryItems[index] ?? emptyGalleryItem(index))
+      : galleryItems,
+  };
+}
+
+function validateDraft(draft: Business, template: Template | null) {
   const errors: string[] = [];
+  const config = getTemplateFormConfig(template?.key);
+
+  if (!draft.templateId) errors.push("Template wajib dipilih lebih dulu.");
   if (!draft.name.trim()) errors.push("Nama bisnis wajib diisi.");
-  if (!draft.slug.trim() || !/^[a-z0-9-]+$/.test(draft.slug.trim())) errors.push("Slug wajib diisi dan hanya boleh huruf kecil, angka, atau tanda hubung.");
+  if (!draft.slug.trim() || !/^[a-z0-9-]+$/.test(draft.slug.trim())) {
+    errors.push("Slug wajib diisi dan hanya boleh huruf kecil, angka, atau tanda hubung.");
+  }
   if (!draft.tagline.trim()) errors.push("Tagline wajib diisi.");
   if (!draft.description.trim()) errors.push("Deskripsi bisnis wajib diisi.");
-  if (!draft.templateId) errors.push("Template wajib dipilih.");
   if (!draft.phone.trim()) errors.push("Nomor telepon wajib diisi.");
   if (!draft.whatsapp.trim()) errors.push("Nomor WhatsApp wajib diisi.");
   if (draft.services.length === 0) errors.push("Minimal harus ada satu layanan.");
+
   draft.services.forEach((service, index) => {
     if (!service.name.trim()) errors.push(`Nama layanan ke-${index + 1} wajib diisi.`);
     if (!service.description.trim()) errors.push(`Deskripsi layanan ke-${index + 1} wajib diisi.`);
   });
+
+  if (config?.fixedTestimonialCount && draft.testimonials.length !== config.fixedTestimonialCount) {
+    errors.push(`Template ini wajib punya ${config.fixedTestimonialCount} testimoni.`);
+  }
+
+  if (config?.fixedGalleryCount && draft.galleryItems.length !== config.fixedGalleryCount) {
+    errors.push(`Template ini wajib punya ${config.fixedGalleryCount} item galeri.`);
+  }
+
   draft.testimonials.forEach((item, index) => {
-    if ((item.name.trim() || item.role.trim() || item.quote.trim()) && (!item.name.trim() || !item.quote.trim())) {
+    const touched = item.name.trim() || item.role.trim() || item.quote.trim() || Boolean(config?.fixedTestimonialCount);
+    if (touched && (!item.name.trim() || !item.quote.trim())) {
       errors.push(`Testimoni ke-${index + 1} wajib punya nama dan kutipan.`);
     }
   });
+
   draft.galleryItems.forEach((item, index) => {
-    if ((item.title.trim() || item.caption.trim() || item.imageUrl.trim()) && (!item.title.trim() || !item.imageUrl.trim())) {
+    const touched = item.title.trim() || item.caption.trim() || item.imageUrl.trim() || Boolean(config?.fixedGalleryCount);
+    if (touched && (!item.title.trim() || !item.imageUrl.trim())) {
       errors.push(`Galeri ke-${index + 1} wajib punya judul dan gambar.`);
     }
   });
+
   return errors;
 }
 
@@ -88,17 +155,28 @@ export function BusinessManager({
   initialBusinesses: Business[];
   templates: Template[];
 }) {
-  const [businesses, setBusinesses] = useState(initialBusinesses);
-  const [selectedId, setSelectedId] = useState(initialBusinesses[0]?.id ?? 0);
-  const [draft, setDraft] = useState<Business>(initialBusinesses[0] ? structuredClone(initialBusinesses[0]) : emptyBusiness());
+  const templateById = useMemo(() => new Map(templates.map((template) => [template.id, template])), [templates]);
+  const initialHydrated = useMemo(
+    () =>
+      initialBusinesses.map((business) =>
+        hydrateDraft(structuredClone(business), templateById.get(business.templateId ?? -1) ?? null),
+      ),
+    [initialBusinesses, templateById],
+  );
+  const [businesses, setBusinesses] = useState(initialHydrated);
+  const [selectedId, setSelectedId] = useState(initialHydrated[0]?.id ?? 0);
+  const [draft, setDraft] = useState<Business>(initialHydrated[0] ? structuredClone(initialHydrated[0]) : emptyBusiness());
   const [notice, setNotice] = useState<Notice | null>(null);
   const [uploadTarget, setUploadTarget] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
   const canCreate = currentAdmin.role === "owner";
   const canDelete = currentAdmin.role === "owner" && Boolean(draft.id);
   const usesSupabaseStorage = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  const selectedTemplate = templates.find((template) => template.id === draft.templateId) ?? null;
+  const selectedTemplate = draft.templateId ? templateById.get(draft.templateId) ?? null : null;
+  const selectedTemplateConfig = getTemplateFormConfig(selectedTemplate?.key);
+  const isAtelier = selectedTemplate?.key === "atelier-mosaic";
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -111,7 +189,7 @@ export function BusinessManager({
   }
 
   function updateArrayItem<T extends Service | Testimonial | GalleryItem>(
-    key: "services" | "testimonials" | "galleryItems",
+    key: ArrayFieldKey,
     index: number,
     patch: Partial<T>,
   ) {
@@ -121,37 +199,58 @@ export function BusinessManager({
     }));
   }
 
-  function addArrayItem(key: "services" | "testimonials" | "galleryItems") {
-    const next = key === "services" ? emptyService() : key === "testimonials" ? emptyTestimonial() : emptyGalleryItem();
-    setDraft((current) => ({ ...current, [key]: [...current[key], next] }));
+  function addArrayItem(key: ArrayFieldKey) {
+    if (key === "services") setDraft((current) => ({ ...current, services: [...current.services, emptyService()] }));
+    if (key === "testimonials") {
+      setDraft((current) => ({ ...current, testimonials: [...current.testimonials, emptyTestimonial(current.testimonials.length)] }));
+    }
+    if (key === "galleryItems") {
+      setDraft((current) => ({ ...current, galleryItems: [...current.galleryItems, emptyGalleryItem(current.galleryItems.length)] }));
+    }
   }
 
-  function removeArrayItem(key: "services" | "testimonials" | "galleryItems", index: number) {
+  function removeArrayItem(key: ArrayFieldKey, index: number) {
     setDraft((current) => ({ ...current, [key]: current[key].filter((_, itemIndex) => itemIndex !== index) }));
+  }
+
+  function chooseTemplate(templateId: number) {
+    setDraft((current) => hydrateDraft(current, templateById.get(templateId) ?? null));
   }
 
   function selectBusiness(id: number) {
     setSelectedId(id);
-    const target = businesses.find((item) => item.id === id);
-    if (target) setDraft(structuredClone(target));
+    const target = businesses.find((business) => business.id === id);
+    if (target) setDraft(hydrateDraft(structuredClone(target), templateById.get(target.templateId ?? -1) ?? null));
   }
 
   function startCreate() {
-    if (!canCreate) return setNotice({ type: "info", message: "Akun admin biasa tidak bisa membuat bisnis baru." });
+    if (!canCreate) {
+      setNotice({ type: "info", message: "Akun admin biasa tidak bisa membuat bisnis baru." });
+      return;
+    }
     setSelectedId(0);
     setDraft(emptyBusiness());
   }
 
   async function handleSave() {
-    const errors = validateDraft(draft);
-    if (errors.length > 0) return setNotice({ type: "error", message: errors[0] });
+    const prepared = selectedTemplate ? hydrateDraft(draft, selectedTemplate) : draft;
+    const errors = validateDraft(prepared, selectedTemplate);
+    if (errors.length > 0) {
+      setDraft(prepared);
+      setNotice({ type: "error", message: errors[0] });
+      return;
+    }
+
     setIsSaving(true);
     try {
-      const saved = await saveBusiness(draft);
-      const nextBusinesses = businesses.some((item) => item.id === saved.id) ? businesses.map((item) => (item.id === saved.id ? saved : item)) : [saved, ...businesses];
+      const saved = await saveBusiness(prepared);
+      const hydrated = hydrateDraft(saved, templateById.get(saved.templateId ?? -1) ?? null);
+      const nextBusinesses = businesses.some((item) => item.id === hydrated.id)
+        ? businesses.map((item) => (item.id === hydrated.id ? hydrated : item))
+        : [hydrated, ...businesses];
       setBusinesses(nextBusinesses);
-      setSelectedId(saved.id);
-      setDraft(structuredClone(saved));
+      setSelectedId(hydrated.id);
+      setDraft(structuredClone(hydrated));
       setNotice({ type: "success", message: draft.id ? "Perubahan bisnis berhasil disimpan." : "Bisnis baru berhasil dibuat." });
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "Failed to save business." });
@@ -161,20 +260,30 @@ export function BusinessManager({
   }
 
   async function handleDelete() {
-    if (!canDelete) return setNotice({ type: "info", message: currentAdmin.role === "owner" ? "Pilih bisnis yang akan dihapus." : "Hanya owner yang bisa menghapus bisnis." });
+    if (!canDelete) {
+      setNotice({
+        type: "info",
+        message: currentAdmin.role === "owner" ? "Pilih bisnis yang akan dihapus." : "Hanya owner yang bisa menghapus bisnis.",
+      });
+      return;
+    }
+
     if (!window.confirm(`Hapus bisnis "${draft.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+
     setIsDeleting(true);
     try {
       await deleteBusinessById(draft.id);
       const nextBusinesses = businesses.filter((item) => item.id !== draft.id);
       setBusinesses(nextBusinesses);
+
       if (nextBusinesses[0]) {
         setSelectedId(nextBusinesses[0].id);
-        setDraft(structuredClone(nextBusinesses[0]));
+        setDraft(hydrateDraft(structuredClone(nextBusinesses[0]), templateById.get(nextBusinesses[0].templateId ?? -1) ?? null));
       } else {
         setSelectedId(0);
         setDraft(emptyBusiness());
       }
+
       setNotice({ type: "success", message: "Bisnis berhasil dihapus." });
     } catch (error) {
       setNotice({ type: "error", message: error instanceof Error ? error.message : "Failed to delete business." });
@@ -183,7 +292,7 @@ export function BusinessManager({
     }
   }
 
-  async function uploadImage(target: "heroImage" | "ogImage" | `gallery-${number}`, file: File | null) {
+  async function uploadImage(target: ImageTarget, file: File | null) {
     if (!file) return;
     setUploadTarget(target);
     try {
@@ -209,7 +318,11 @@ export function BusinessManager({
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <h1 className="font-display text-2xl font-bold text-white">Businesses</h1>
-              <p className="text-sm text-slate-400">{currentAdmin.role === "owner" ? "Owner bisa membuat dan menghapus semua website." : "Admin hanya bisa edit website yang diberi akses."}</p>
+              <p className="text-sm text-slate-400">
+                {currentAdmin.role === "owner"
+                  ? "Owner bisa membuat dan menghapus semua website."
+                  : "Admin hanya bisa edit website yang diberi akses."}
+              </p>
             </div>
             <button onClick={startCreate} type="button" disabled={!canCreate} className="rounded-full bg-cyan-300 p-2 text-slate-950 disabled:opacity-50">
               <Plus className="h-5 w-5" />
@@ -225,7 +338,9 @@ export function BusinessManager({
             </div>
           </div>
           <div className="space-y-3">
-            {businesses.length === 0 ? <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-300">Belum ada bisnis dalam scope akun ini.</div> : businesses.map((business) => (
+            {businesses.length === 0 ? (
+              <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-300">Belum ada bisnis dalam scope akun ini.</div>
+            ) : businesses.map((business) => (
               <button key={business.id} onClick={() => selectBusiness(business.id)} type="button" className={`w-full rounded-3xl border p-4 text-left ${selectedId === business.id ? "border-cyan-300/35 bg-cyan-300/10" : "border-white/10 bg-white/5"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-white">{business.name}</p>
@@ -241,80 +356,102 @@ export function BusinessManager({
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-2xl font-bold text-white">{draft.id ? `Edit ${draft.name}` : "Create new business"}</h2>
-              <p className="text-sm text-slate-400">Semua field section, testimonial, galeri, dan kontak disimpan ke database.</p>
+              <p className="text-sm text-slate-400">
+                Pilih template dulu. Setiap template langsung memuat struktur default section tanpa pindah halaman.
+              </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              {draft.slug ? <Link href={`/${draft.slug}`} className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white">Preview page</Link> : null}
-              <button onClick={handleDelete} type="button" disabled={isDeleting || !canDelete} className="rounded-full border border-rose-400/25 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-100 disabled:opacity-60">{isDeleting ? "Deleting..." : "Delete"}</button>
-              <button onClick={handleSave} type="button" disabled={isSaving} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-60">{isSaving ? "Saving..." : draft.id ? "Save changes" : "Save business"}</button>
+              {draft.slug ? (
+                <Link href={`/${draft.slug}`} className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white">
+                  Preview page
+                </Link>
+              ) : null}
+              <button onClick={handleDelete} type="button" disabled={isDeleting || !canDelete} className="rounded-full border border-rose-400/25 bg-rose-400/10 px-4 py-2 text-sm font-semibold text-rose-100 disabled:opacity-60">
+                {isDeleting ? "Deleting..." : "Delete"}
+              </button>
+              <button onClick={handleSave} type="button" disabled={isSaving || !selectedTemplate} className="rounded-full bg-cyan-300 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-60">
+                {isSaving ? "Saving..." : draft.id ? "Save changes" : "Save business"}
+              </button>
             </div>
           </div>
 
           <div className="mb-6 grid gap-4 md:grid-cols-2">
-            <InfoCard label="Template active" title={selectedTemplate?.name ?? "Belum dipilih"} description={selectedTemplate?.description ?? "Pilih template agar output halaman mengikuti visual yang sesuai."} />
-            <InfoCard label="Storage strategy" title={usesSupabaseStorage ? "Supabase Storage + URL in database" : "File path only in database"} description={usesSupabaseStorage ? "File di-upload ke Supabase Storage, database hanya menyimpan URL publik." : "File disimpan ke public/uploads/businesses, database hanya menyimpan path."} />
+            <InfoCard label="Template active" title={selectedTemplate?.name ?? "Belum dipilih"} description={selectedTemplate?.description ?? "Pilih template agar struktur form dan output halaman mengikuti desain yang tepat."} />
+            <InfoCard label="Storage strategy" title={usesSupabaseStorage ? "Supabase Storage + path di database" : "File path only in database"} description={usesSupabaseStorage ? "User tidak mengetik URL gambar. Upload file dulu, database hanya menyimpan path publiknya." : "User tidak mengetik URL gambar. File di-upload lalu database hanya menyimpan path."} />
           </div>
 
-          <Section title="Business core">
-            <Grid>
-              <Field label="Business name" required><input value={draft.name} onChange={(event) => updateField("name", event.target.value)} className="input" /></Field>
-              <Field label="Slug" required><input value={draft.slug} onChange={(event) => updateField("slug", event.target.value.toLowerCase())} className="input" /></Field>
-              <Field label="Template" required><select value={draft.templateId ?? ""} onChange={(event) => updateField("templateId", event.target.value ? Number(event.target.value) : null)} className="input"><option value="">Pilih template</option>{templates.map((template) => <option key={template.id} value={template.id}>{template.name}</option>)}</select></Field>
-              <Field label="Hero label"><input value={draft.heroLabel} onChange={(event) => updateField("heroLabel", event.target.value)} className="input" /></Field>
-              <Field label="Tagline" required><input value={draft.tagline} onChange={(event) => updateField("tagline", event.target.value)} className="input" /></Field>
-              <Field label="Hero CTA label"><input value={draft.heroCtaLabel} onChange={(event) => updateField("heroCtaLabel", event.target.value)} className="input" /></Field>
-              <Field label="Hero CTA URL"><input value={draft.heroCtaUrl} onChange={(event) => updateField("heroCtaUrl", event.target.value)} className="input" /></Field>
-              <Field label="Description" required><textarea value={draft.description} onChange={(event) => updateField("description", event.target.value)} className="input min-h-24" /></Field>
-            </Grid>
-          </Section>
-
-          <Section title="Section copy">
-            <Grid>
-              <Field label="About title"><input value={draft.aboutTitle} onChange={(event) => updateField("aboutTitle", event.target.value)} className="input" /></Field>
-              <Field label="About intro"><textarea value={draft.aboutIntro} onChange={(event) => updateField("aboutIntro", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Services title"><input value={draft.servicesTitle} onChange={(event) => updateField("servicesTitle", event.target.value)} className="input" /></Field>
-              <Field label="Services intro"><textarea value={draft.servicesIntro} onChange={(event) => updateField("servicesIntro", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Testimonials title"><input value={draft.testimonialsTitle} onChange={(event) => updateField("testimonialsTitle", event.target.value)} className="input" /></Field>
-              <Field label="Testimonials intro"><textarea value={draft.testimonialsIntro} onChange={(event) => updateField("testimonialsIntro", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Gallery title"><input value={draft.galleryTitle} onChange={(event) => updateField("galleryTitle", event.target.value)} className="input" /></Field>
-              <Field label="Gallery intro"><textarea value={draft.galleryIntro} onChange={(event) => updateField("galleryIntro", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Contact title"><input value={draft.contactTitle} onChange={(event) => updateField("contactTitle", event.target.value)} className="input" /></Field>
-              <Field label="Contact intro"><textarea value={draft.contactIntro} onChange={(event) => updateField("contactIntro", event.target.value)} className="input min-h-24" /></Field>
-            </Grid>
-          </Section>
-
-          <Section title="Services">
-            <ArrayHeader title="Services" actionLabel="Add service" onClick={() => addArrayItem("services")} />
-            {draft.services.map((service, index) => <ArrayCard key={`${service.id}-${index}`}><Grid three><Field label="Service name" required><input value={service.name} onChange={(event) => updateArrayItem<Service>("services", index, { name: event.target.value })} className="input" /></Field><Field label="Icon key"><IconKeySelect value={service.icon} onChange={(value) => updateArrayItem<Service>("services", index, { icon: value })} /></Field><DangerIconButton onClick={() => removeArrayItem("services", index)} /></Grid><Field label="Description" required><textarea value={service.description} onChange={(event) => updateArrayItem<Service>("services", index, { description: event.target.value })} className="input min-h-24" /></Field></ArrayCard>)}
-          </Section>
-
-          <Section title="Testimonials">
-            <ArrayHeader title="Testimonials" actionLabel="Add testimonial" onClick={() => addArrayItem("testimonials")} />
-            {draft.testimonials.map((item, index) => <ArrayCard key={`${item.id}-${index}`}><Grid three><Field label="Client name"><input value={item.name} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { name: event.target.value })} className="input" /></Field><Field label="Client role"><input value={item.role} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { role: event.target.value })} className="input" /></Field><DangerIconButton onClick={() => removeArrayItem("testimonials", index)} /></Grid><Field label="Quote"><textarea value={item.quote} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { quote: event.target.value })} className="input min-h-24" /></Field></ArrayCard>)}
-          </Section>
-
-          <Section title="Gallery">
-            <ArrayHeader title="Gallery items" actionLabel="Add gallery item" onClick={() => addArrayItem("galleryItems")} />
-            {draft.galleryItems.map((item, index) => <ArrayCard key={`${item.id}-${index}`}><Grid three><Field label="Title"><input value={item.title} onChange={(event) => updateArrayItem<GalleryItem>("galleryItems", index, { title: event.target.value })} className="input" /></Field><Field label="Image URL / path"><input value={item.imageUrl} onChange={(event) => updateArrayItem<GalleryItem>("galleryItems", index, { imageUrl: event.target.value })} className="input" /></Field><DangerIconButton onClick={() => removeArrayItem("galleryItems", index)} /></Grid><Grid><Field label="Caption"><textarea value={item.caption} onChange={(event) => updateArrayItem<GalleryItem>("galleryItems", index, { caption: event.target.value })} className="input min-h-24" /></Field><Field label="Upload gallery image"><input type="file" accept="image/*" onChange={(event) => void uploadImage(`gallery-${index}`, event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">{uploadTarget === `gallery-${index}` ? "Uploading gallery image..." : "Upload aman, database hanya menyimpan path/URL."}</p></Field></Grid><InlineImagePreview src={item.imageUrl || null} /></ArrayCard>)}
-          </Section>
-
-          <Section title="Contact and SEO">
-            <Grid>
-              <Field label="Phone" required><input value={draft.phone} onChange={(event) => updateField("phone", event.target.value)} className="input" /></Field>
-              <Field label="WhatsApp" required><input value={draft.whatsapp} onChange={(event) => updateField("whatsapp", event.target.value)} className="input" /></Field>
-              <Field label="Address"><textarea value={draft.address} onChange={(event) => updateField("address", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Meta title"><input value={draft.metaTitle} onChange={(event) => updateField("metaTitle", event.target.value)} className="input" /></Field>
-              <Field label="Meta description"><textarea value={draft.metaDescription} onChange={(event) => updateField("metaDescription", event.target.value)} className="input min-h-24" /></Field>
-              <Field label="Hero image URL"><input value={draft.heroImage ?? ""} onChange={(event) => updateField("heroImage", event.target.value || null)} className="input" /></Field>
-              <Field label="Upload hero image"><input type="file" accept="image/*" onChange={(event) => void uploadImage("heroImage", event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">{uploadTarget === "heroImage" ? "Uploading hero image..." : "Upload aman, database hanya menyimpan path/URL."}</p></Field>
-              <Field label="OpenGraph image URL"><input value={draft.ogImage ?? ""} onChange={(event) => updateField("ogImage", event.target.value || null)} className="input" /></Field>
-              <Field label="Upload OpenGraph image"><input type="file" accept="image/*" onChange={(event) => void uploadImage("ogImage", event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">{uploadTarget === "ogImage" ? "Uploading OpenGraph image..." : usesSupabaseStorage ? "Upload via Supabase Storage." : "Upload ke public/uploads/businesses."}</p></Field>
-            </Grid>
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              <ImagePreviewCard title="Hero Image Preview" src={draft.heroImage} onClear={() => updateField("heroImage", null)} />
-              <ImagePreviewCard title="OpenGraph Preview" src={draft.ogImage} onClear={() => updateField("ogImage", null)} />
+          <Section title="Pilih template dulu" eyebrow="Step 1" description="Setiap template punya identitas visual berbeda. Atelier Mosaic masih memakai layout fixed; template lain tetap memakai form generik yang fleksibel.">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {templates.map((template) => (
+                <button key={template.id} type="button" onClick={() => chooseTemplate(template.id)} className={`overflow-hidden rounded-[1.6rem] border text-left transition ${template.id === draft.templateId ? "border-cyan-300/40 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
+                  <div className="h-28 w-full" style={{ background: template.previewImage ? undefined : `linear-gradient(135deg, ${template.accent ?? "#44d6e8"}22, rgba(255,255,255,0.08), rgba(15,23,42,0.18))` }}>
+                    {template.previewImage ? <Image src={template.previewImage} alt={template.name} width={720} height={320} unoptimized className="h-full w-full object-cover" /> : null}
+                  </div>
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">{template.categoryLabel}</p>
+                        <h3 className="mt-2 text-lg font-semibold text-white">{template.name}</h3>
+                      </div>
+                      <span className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] ${template.id === draft.templateId ? "border-cyan-300/30 bg-cyan-300/12 text-cyan-100" : "border-white/10 bg-white/5 text-slate-300"}`}>
+                        {template.id === draft.templateId ? "Dipilih" : template.key === "atelier-mosaic" ? "Fixed layout" : "Flexible"}
+                      </span>
+                    </div>
+                    <p className="mt-3 text-sm leading-6 text-slate-300">{template.description}</p>
+                  </div>
+                </button>
+              ))}
             </div>
           </Section>
+
+          <AnimatePresence mode="wait">
+            {!selectedTemplate ? (
+              <motion.div key="empty" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-8 rounded-[1.75rem] border border-dashed border-white/12 bg-white/5 p-6 text-sm leading-7 text-slate-300">
+                Pilih salah satu template di atas dulu. Setelah itu box form akan muncul di bawah dan default title seperti About, Services, Testimonials, Gallery, dan Contact akan langsung terisi.
+              </motion.div>
+            ) : (
+              <motion.div key={selectedTemplate.key} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.28, ease: "easeOut" }} className="mt-8 space-y-8">
+                {isAtelier ? (
+                  <section className="grid gap-6 xl:grid-cols-[0.34fr_0.66fr]">
+                    <div className="space-y-6">
+                      <div className="overflow-hidden rounded-[2rem] border border-[#d4b089]/35 bg-[linear-gradient(180deg,rgba(244,234,216,0.98),rgba(238,224,203,0.96))] p-6 text-[#20352e] shadow-[0_24px_80px_rgba(12,30,24,0.14)]">
+                        <p className="text-xs uppercase tracking-[0.3em] text-[#8c5b48]">Fixed layout template</p>
+                        <h3 className="mt-4 font-display text-4xl font-semibold leading-[0.95] text-[#17312a]">Atelier Mosaic</h3>
+                        <p className="mt-4 text-sm leading-7 text-[#425b53]">Form ini mengikuti layout editorial di frontend. Galeri wajib {selectedTemplateConfig?.fixedGalleryCount ?? 4} item dan testimoni wajib {selectedTemplateConfig?.fixedTestimonialCount ?? 3} item.</p>
+                        <div className="mt-6 grid gap-3">
+                          <TemplateStat label="Section" value="6 blok utama" />
+                          <TemplateStat label="Galeri tetap" value={`${selectedTemplateConfig?.fixedGalleryCount ?? 4} frame`} />
+                          <TemplateStat label="Testimoni tetap" value={`${selectedTemplateConfig?.fixedTestimonialCount ?? 3} quote`} />
+                        </div>
+                      </div>
+                      <div className="rounded-[2rem] border border-white/10 bg-white/5 p-5">
+                        <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">Template info</p>
+                        <h4 className="mt-3 text-lg font-semibold text-white">{selectedTemplate.name}</h4>
+                        <p className="mt-2 text-sm leading-6 text-slate-300">{selectedTemplate.description}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-8">
+                      <Section title="Isi identitas utama dulu" eyebrow="Brand core" description="Atelier Mosaic memakai hero editorial, jadi nama, tagline, dan deskripsi sebaiknya lebih kuat." className="border-[#d4b089]/20 bg-white/6"><CoreFields draft={draft} updateField={updateField} /></Section>
+                      <Section title="Default copy sudah terisi" eyebrow="Section copy" description="Header section di frontend sudah punya default. Client boleh ubah, tapi kalau dibiarkan kosong tetap aman." className="border-[#d4b089]/20 bg-white/6"><CopyFields draft={draft} updateField={updateField} /></Section>
+                      <Section title="Layanan utama" eyebrow="Services"><ServicesEditorBlock services={draft.services} updateArrayItem={updateArrayItem} addArrayItem={addArrayItem} removeArrayItem={removeArrayItem} /></Section>
+                      <Section title={`Wajib ${selectedTemplateConfig?.fixedTestimonialCount ?? 3} testimoni`} eyebrow="Testimonials" description="Jumlah testimoni dikunci agar ritme layout tetap stabil."><TestimonialsBlock testimonials={draft.testimonials} updateArrayItem={updateArrayItem} fixed /></Section>
+                      <Section title={`Wajib ${selectedTemplateConfig?.fixedGalleryCount ?? 4} frame galeri`} eyebrow="Gallery" description="User tidak mengetik URL gambar. Upload saja, backend menyimpan path otomatis."><GalleryBlock galleryItems={draft.galleryItems} updateArrayItem={updateArrayItem} removeArrayItem={removeArrayItem} addArrayItem={addArrayItem} uploadImage={uploadImage} uploadTarget={uploadTarget} fixed /></Section>
+                      <Section title="Kontak dan gambar utama" eyebrow="Contact and SEO" description="Field URL gambar sengaja disembunyikan. Hero dan OG image hanya lewat upload."><ContactBlock draft={draft} updateField={updateField} uploadImage={uploadImage} uploadTarget={uploadTarget} usesSupabaseStorage={usesSupabaseStorage} /></Section>
+                    </div>
+                  </section>
+                ) : (
+                  <>
+                    <Section title={selectedTemplate.name} eyebrow="Template mode" description="Template ini memakai form generik. Fokusnya di isi konten, sementara karakter visual utama diatur oleh renderer template."><CoreFields draft={draft} updateField={updateField} /></Section>
+                    <Section title="Copy per section" eyebrow="Section copy"><CopyFields draft={draft} updateField={updateField} /></Section>
+                    <Section title="Layanan yang tampil di halaman" eyebrow="Services"><ServicesEditorBlock services={draft.services} updateArrayItem={updateArrayItem} addArrayItem={addArrayItem} removeArrayItem={removeArrayItem} /></Section>
+                    <Section title="Testimoni pelanggan" eyebrow="Testimonials"><TestimonialsBlock testimonials={draft.testimonials} updateArrayItem={updateArrayItem} addArrayItem={addArrayItem} removeArrayItem={removeArrayItem} /></Section>
+                    <Section title="Galeri visual" eyebrow="Gallery"><GalleryBlock galleryItems={draft.galleryItems} updateArrayItem={updateArrayItem} removeArrayItem={removeArrayItem} addArrayItem={addArrayItem} uploadImage={uploadImage} uploadTarget={uploadTarget} /></Section>
+                    <Section title="Kontak, metadata, dan upload gambar" eyebrow="Contact and SEO"><ContactBlock draft={draft} updateField={updateField} uploadImage={uploadImage} uploadTarget={uploadTarget} usesSupabaseStorage={usesSupabaseStorage} /></Section>
+                  </>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>
         </section>
       </div>
 
@@ -323,32 +460,229 @@ export function BusinessManager({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return <section className="mt-8 rounded-[1.75rem] border border-white/10 bg-white/5 p-5"><h3 className="text-xl font-semibold text-white">{title}</h3><div className="mt-4">{children}</div></section>;
+function CoreFields({
+  draft,
+  updateField,
+}: {
+  draft: Business;
+  updateField: <Key extends keyof Business>(key: Key, value: Business[Key]) => void;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Field label="Business name" required><input value={draft.name} onChange={(event) => updateField("name", event.target.value)} className="input" /></Field>
+      <Field label="Slug" required><input value={draft.slug} onChange={(event) => updateField("slug", event.target.value.toLowerCase())} className="input" /></Field>
+      <Field label="Hero label"><input value={draft.heroLabel} onChange={(event) => updateField("heroLabel", event.target.value)} className="input" /></Field>
+      <Field label="Tagline" required><input value={draft.tagline} onChange={(event) => updateField("tagline", event.target.value)} className="input" /></Field>
+      <Field label="Hero CTA label"><input value={draft.heroCtaLabel} onChange={(event) => updateField("heroCtaLabel", event.target.value)} className="input" /></Field>
+      <Field label="Hero CTA URL"><input value={draft.heroCtaUrl} onChange={(event) => updateField("heroCtaUrl", event.target.value)} className="input" /></Field>
+      <Field label="Description" required className="md:col-span-2"><textarea value={draft.description} onChange={(event) => updateField("description", event.target.value)} className="input min-h-28" /></Field>
+    </div>
+  );
 }
 
-function Grid({ children, three = false }: { children: React.ReactNode; three?: boolean }) {
-  return <div className={`grid gap-4 ${three ? "md:grid-cols-[1fr_1fr_auto]" : "md:grid-cols-2"}`}>{children}</div>;
+function CopyFields({
+  draft,
+  updateField,
+}: {
+  draft: Business;
+  updateField: <Key extends keyof Business>(key: Key, value: Business[Key]) => void;
+}) {
+  return (
+    <div className="grid gap-4 md:grid-cols-2">
+      <Field label="About title"><input value={draft.aboutTitle} onChange={(event) => updateField("aboutTitle", event.target.value)} className="input" /></Field>
+      <Field label="About intro"><textarea value={draft.aboutIntro} onChange={(event) => updateField("aboutIntro", event.target.value)} className="input min-h-24" /></Field>
+      <Field label="Services title"><input value={draft.servicesTitle} onChange={(event) => updateField("servicesTitle", event.target.value)} className="input" /></Field>
+      <Field label="Services intro"><textarea value={draft.servicesIntro} onChange={(event) => updateField("servicesIntro", event.target.value)} className="input min-h-24" /></Field>
+      <Field label="Testimonials title"><input value={draft.testimonialsTitle} onChange={(event) => updateField("testimonialsTitle", event.target.value)} className="input" /></Field>
+      <Field label="Testimonials intro"><textarea value={draft.testimonialsIntro} onChange={(event) => updateField("testimonialsIntro", event.target.value)} className="input min-h-24" /></Field>
+      <Field label="Gallery title"><input value={draft.galleryTitle} onChange={(event) => updateField("galleryTitle", event.target.value)} className="input" /></Field>
+      <Field label="Gallery intro"><textarea value={draft.galleryIntro} onChange={(event) => updateField("galleryIntro", event.target.value)} className="input min-h-24" /></Field>
+      <Field label="Contact title"><input value={draft.contactTitle} onChange={(event) => updateField("contactTitle", event.target.value)} className="input" /></Field>
+      <Field label="Contact intro"><textarea value={draft.contactIntro} onChange={(event) => updateField("contactIntro", event.target.value)} className="input min-h-24" /></Field>
+    </div>
+  );
 }
 
-function Field({ label, required = false, children }: { label: string; required?: boolean; children: React.ReactNode }) {
-  return <label className="block"><span className="mb-2 block text-sm text-slate-300">{label}{required ? <span className="ml-1 text-rose-300">*</span> : null}</span>{children}</label>;
+function ServicesEditorBlock({
+  services,
+  updateArrayItem,
+  addArrayItem,
+  removeArrayItem,
+}: {
+  services: Service[];
+  updateArrayItem: <T extends Service | Testimonial | GalleryItem>(key: ArrayFieldKey, index: number, patch: Partial<T>) => void;
+  addArrayItem: (key: ArrayFieldKey) => void;
+  removeArrayItem: (key: ArrayFieldKey, index: number) => void;
+}) {
+  return (
+    <>
+      <ArrayHeader title="Services" actionLabel="Add service" onClick={() => addArrayItem("services")} />
+      {services.map((service, index) => (
+        <ArrayCard key={`${service.id}-${index}`}>
+          <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto]">
+            <Field label="Service name" required><input value={service.name} onChange={(event) => updateArrayItem<Service>("services", index, { name: event.target.value })} className="input" /></Field>
+            <Field label="Icon key"><IconKeySelect value={service.icon} onChange={(value) => updateArrayItem<Service>("services", index, { icon: value })} /></Field>
+            <DangerIconButton onClick={() => removeArrayItem("services", index)} />
+          </div>
+          <Field label="Description" required><textarea value={service.description} onChange={(event) => updateArrayItem<Service>("services", index, { description: event.target.value })} className="input min-h-24" /></Field>
+        </ArrayCard>
+      ))}
+    </>
+  );
 }
 
-function ArrayHeader({ title, actionLabel, onClick }: { title: string; actionLabel: string; onClick: () => void }) {
-  return <div className="mb-4 flex items-center justify-between"><h4 className="text-lg font-semibold text-white">{title}</h4><button onClick={onClick} type="button" className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white">{actionLabel}</button></div>;
+function TestimonialsBlock({
+  testimonials,
+  updateArrayItem,
+  addArrayItem,
+  removeArrayItem,
+  fixed = false,
+}: {
+  testimonials: Testimonial[];
+  updateArrayItem: <T extends Service | Testimonial | GalleryItem>(key: ArrayFieldKey, index: number, patch: Partial<T>) => void;
+  addArrayItem?: (key: ArrayFieldKey) => void;
+  removeArrayItem?: (key: ArrayFieldKey, index: number) => void;
+  fixed?: boolean;
+}) {
+  return (
+    <>
+      <ArrayHeader title="Testimonials" actionLabel={fixed ? `${testimonials.length} fixed items` : "Add testimonial"} onClick={() => addArrayItem?.("testimonials")} disabled={fixed} />
+      {testimonials.map((item, index) => (
+        <ArrayCard key={`${item.id}-${index}`}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-white">Testimonial {index + 1}</p>
+            {fixed ? (
+              <span className="rounded-full border border-[#d4b089]/25 bg-[#d4b089]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f2d6b8]">Fixed slot</span>
+            ) : removeArrayItem ? (
+              <DangerIconButton onClick={() => removeArrayItem("testimonials", index)} compact />
+            ) : null}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Client name"><input value={item.name} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { name: event.target.value })} className="input" /></Field>
+            <Field label="Client role"><input value={item.role} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { role: event.target.value })} className="input" /></Field>
+          </div>
+          <Field label="Quote"><textarea value={item.quote} onChange={(event) => updateArrayItem<Testimonial>("testimonials", index, { quote: event.target.value })} className="input min-h-24" /></Field>
+        </ArrayCard>
+      ))}
+    </>
+  );
+}
+
+function GalleryBlock({
+  galleryItems,
+  updateArrayItem,
+  addArrayItem,
+  removeArrayItem,
+  uploadImage,
+  uploadTarget,
+  fixed = false,
+}: {
+  galleryItems: GalleryItem[];
+  updateArrayItem: <T extends Service | Testimonial | GalleryItem>(key: ArrayFieldKey, index: number, patch: Partial<T>) => void;
+  addArrayItem: (key: ArrayFieldKey) => void;
+  removeArrayItem: (key: ArrayFieldKey, index: number) => void;
+  uploadImage: (target: ImageTarget, file: File | null) => Promise<void>;
+  uploadTarget: string | null;
+  fixed?: boolean;
+}) {
+  return (
+    <>
+      <ArrayHeader title="Gallery items" actionLabel={fixed ? `${galleryItems.length} fixed items` : "Add gallery item"} onClick={() => addArrayItem("galleryItems")} disabled={fixed} />
+      {galleryItems.map((item, index) => (
+        <ArrayCard key={`${item.id}-${index}`}>
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-white">Gallery frame {index + 1}</p>
+            {fixed ? (
+              <span className="rounded-full border border-[#d4b089]/25 bg-[#d4b089]/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#f2d6b8]">Fixed slot</span>
+            ) : (
+              <DangerIconButton onClick={() => removeArrayItem("galleryItems", index)} compact />
+            )}
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Title"><input value={item.title} onChange={(event) => updateArrayItem<GalleryItem>("galleryItems", index, { title: event.target.value })} className="input" /></Field>
+            <Field label="Caption"><textarea value={item.caption} onChange={(event) => updateArrayItem<GalleryItem>("galleryItems", index, { caption: event.target.value })} className="input min-h-24" /></Field>
+          </div>
+          <Field label="Upload gallery image">
+            <input type="file" accept="image/*" onChange={(event) => void uploadImage(`gallery-${index}`, event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" />
+            <p className="mt-2 text-xs text-slate-400">{uploadTarget === `gallery-${index}` ? "Uploading gallery image..." : "URL gambar disembunyikan. Setelah upload, path disimpan otomatis di backend."}</p>
+          </Field>
+          <InlineImagePreview src={item.imageUrl || null} />
+        </ArrayCard>
+      ))}
+    </>
+  );
+}
+
+function ContactBlock({
+  draft,
+  updateField,
+  uploadImage,
+  uploadTarget,
+  usesSupabaseStorage,
+}: {
+  draft: Business;
+  updateField: <Key extends keyof Business>(key: Key, value: Business[Key]) => void;
+  uploadImage: (target: ImageTarget, file: File | null) => Promise<void>;
+  uploadTarget: string | null;
+  usesSupabaseStorage: boolean;
+}) {
+  return (
+    <>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Phone" required><input value={draft.phone} onChange={(event) => updateField("phone", event.target.value)} className="input" /></Field>
+        <Field label="WhatsApp" required><input value={draft.whatsapp} onChange={(event) => updateField("whatsapp", event.target.value)} className="input" /></Field>
+        <Field label="Address"><textarea value={draft.address} onChange={(event) => updateField("address", event.target.value)} className="input min-h-24" /></Field>
+        <Field label="Meta title"><input value={draft.metaTitle} onChange={(event) => updateField("metaTitle", event.target.value)} className="input" /></Field>
+        <Field label="Meta description"><textarea value={draft.metaDescription} onChange={(event) => updateField("metaDescription", event.target.value)} className="input min-h-24" /></Field>
+        <Field label="Upload hero image"><input type="file" accept="image/*" onChange={(event) => void uploadImage("heroImage", event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">{uploadTarget === "heroImage" ? "Uploading hero image..." : "Field URL gambar tidak ditampilkan. Upload saja."}</p></Field>
+        <Field label="Upload OpenGraph image"><input type="file" accept="image/*" onChange={(event) => void uploadImage("ogImage", event.target.files?.[0] ?? null)} className="input file:mr-3 file:rounded-full file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:font-semibold file:text-slate-950" /><p className="mt-2 text-xs text-slate-400">{uploadTarget === "ogImage" ? "Uploading OpenGraph image..." : usesSupabaseStorage ? "Upload via Supabase Storage." : "Upload ke folder uploads."}</p></Field>
+      </div>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        <ImagePreviewCard title="Hero Image Preview" src={draft.heroImage} onClear={() => updateField("heroImage", null)} />
+        <ImagePreviewCard title="OpenGraph Preview" src={draft.ogImage} onClear={() => updateField("ogImage", null)} />
+      </div>
+    </>
+  );
+}
+
+function Section({
+  title,
+  eyebrow,
+  description,
+  children,
+  className = "",
+}: {
+  title: string;
+  eyebrow?: string;
+  description?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return <section className={`rounded-[1.75rem] border border-white/10 bg-white/5 p-5 ${className}`}><p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">{eyebrow}</p><h3 className="mt-3 text-xl font-semibold text-white">{title}</h3>{description ? <p className="mt-2 text-sm leading-7 text-slate-400">{description}</p> : null}<div className="mt-4">{children}</div></section>;
+}
+
+function Field({ label, required = false, children, className = "" }: { label: string; required?: boolean; children: React.ReactNode; className?: string }) {
+  return <label className={`block ${className}`}><span className="mb-2 block text-sm text-slate-300">{label}{required ? <span className="ml-1 text-rose-300">*</span> : null}</span>{children}</label>;
+}
+
+function ArrayHeader({ title, actionLabel, onClick, disabled = false }: { title: string; actionLabel: string; onClick: () => void; disabled?: boolean }) {
+  return <div className="mb-4 flex items-center justify-between gap-3"><h4 className="text-lg font-semibold text-white">{title}</h4><button onClick={onClick} type="button" disabled={disabled} className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60">{actionLabel}</button></div>;
 }
 
 function ArrayCard({ children }: { children: React.ReactNode }) {
   return <div className="mb-4 rounded-3xl border border-white/10 bg-slate-950/30 p-4">{children}</div>;
 }
 
-function DangerIconButton({ onClick }: { onClick: () => void }) {
-  return <button onClick={onClick} type="button" className="mt-7 flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-300/20 bg-rose-400/10 text-rose-100"><Trash2 className="h-4 w-4" /></button>;
+function DangerIconButton({ onClick, compact = false }: { onClick: () => void; compact?: boolean }) {
+  return <button onClick={onClick} type="button" className={`flex items-center justify-center rounded-2xl border border-rose-300/20 bg-rose-400/10 text-rose-100 ${compact ? "h-11 w-11" : "mt-7 h-12 w-12"}`}><Trash2 className="h-4 w-4" /></button>;
 }
 
 function InfoCard({ label, title, description }: { label: string; title: string; description: string }) {
   return <div className="rounded-3xl border border-white/10 bg-white/5 p-4"><p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">{label}</p><p className="mt-3 text-lg font-semibold text-white">{title}</p><p className="mt-1 text-sm text-slate-400">{description}</p></div>;
+}
+
+function TemplateStat({ label, value }: { label: string; value: string }) {
+  return <div className="rounded-[1.4rem] border border-[#17312a]/10 bg-white/55 px-4 py-4"><p className="text-[11px] uppercase tracking-[0.28em] text-[#8c5b48]">{label}</p><p className="mt-2 text-lg font-semibold text-[#17312a]">{value}</p></div>;
 }
 
 function ImagePreviewCard({ title, src, onClear }: { title: string; src: string | null; onClear: () => void }) {

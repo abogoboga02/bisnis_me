@@ -75,6 +75,42 @@ CREATE TABLE IF NOT EXISTS bisnis_me.gallery_items (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.users', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.users), 0) + 1,
+  false
+);
+
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.templates', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.templates), 0) + 1,
+  false
+);
+
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.businesses', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.businesses), 0) + 1,
+  false
+);
+
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.services', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.services), 0) + 1,
+  false
+);
+
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.testimonials', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.testimonials), 0) + 1,
+  false
+);
+
+SELECT setval(
+  pg_get_serial_sequence('bisnis_me.gallery_items', 'id'),
+  COALESCE((SELECT MAX(id) FROM bisnis_me.gallery_items), 0) + 1,
+  false
+);
+
 UPDATE bisnis_me.users
 SET role = 'owner',
     updated_at = NOW()
@@ -106,6 +142,83 @@ VALUES (
   NOW(),
   NOW()
 )
+ON CONFLICT (key) DO UPDATE
+SET name = EXCLUDED.name,
+    description = EXCLUDED.description,
+    accent = EXCLUDED.accent,
+    category = EXCLUDED.category,
+    category_label = EXCLUDED.category_label,
+    fit = EXCLUDED.fit,
+    feature = EXCLUDED.feature,
+    preview_image = EXCLUDED.preview_image,
+    updated_at = NOW();
+
+INSERT INTO bisnis_me.templates (
+  name,
+  key,
+  description,
+  accent,
+  category,
+  category_label,
+  fit,
+  feature,
+  preview_image,
+  created_at,
+  updated_at
+)
+VALUES
+  (
+    'Signal Frame',
+    'signal-frame',
+    'Swiss-grid business template with bold hierarchy, sharp geometry, and premium CTA flow.',
+    '#d63f24',
+    'company-profile',
+    'Company Profile',
+    'Konsultan, B2B service, agency, kontraktor, bisnis profesional yang ingin tampil tegas',
+    'Poster-style hero, capability matrix, proof strip, dan contact grid yang sangat rapi.',
+    '/uploads/seed/signal-frame.svg',
+    NOW(),
+    NOW()
+  ),
+  (
+    'Noir Grid',
+    'noir-grid',
+    'Dark command-center aesthetic with neon accents, terminal grids, and a strict modular rhythm.',
+    '#d4ff47',
+    'jasa',
+    'Jasa',
+    'Tech service, security, modern workshop, operations-heavy business, brand dengan tone futuristik',
+    'Hero terminal, protocol narrative, stacked modules, signal feed, dan contact command block.',
+    '/uploads/seed/noir-grid.svg',
+    NOW(),
+    NOW()
+  ),
+  (
+    'Prism Riot',
+    'prism-riot',
+    'Angular campaign template with radical shapes, color collisions, and experimental storytelling.',
+    '#215cff',
+    'personal-brand',
+    'Creative Brand',
+    'Studio kreatif, art director, campaign brand, boutique launch, fashion-forward service',
+    'Scene-zero hero, atlas narrative, service totems, collage proof, dan dock CTA yang sangat unik.',
+    '/uploads/seed/prism-riot.svg',
+    NOW(),
+    NOW()
+  ),
+  (
+    'Harbor Ledger',
+    'harbor-ledger',
+    'Blueprint-inspired corporate template with ledger lines, premium calm, and formal structure.',
+    '#bf7953',
+    'company-profile',
+    'Corporate Service',
+    'Konsultan, logistik, konstruksi, legal service, corporate operations, bisnis formal',
+    'Manifest hero, business ledger, blueprint services, project proof, dan structured contact panel.',
+    '/uploads/seed/harbor-ledger.svg',
+    NOW(),
+    NOW()
+  )
 ON CONFLICT (key) DO UPDATE
 SET name = EXCLUDED.name,
     description = EXCLUDED.description,

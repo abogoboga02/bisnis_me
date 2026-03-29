@@ -3,6 +3,7 @@ import "server-only";
 import type { AdminIdentity, AdminRole, Business, GalleryItem, Service, Template, Testimonial } from "@/lib/types";
 import { verifyPassword } from "@/lib/password";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { applyTemplateDefaults, getTemplateFormConfig } from "@/lib/template-form-config";
 
 type TemplateRow = {
   id: number;
@@ -302,8 +303,7 @@ function normalizePayload(payload: BusinessPayload): NormalizedBusinessPayload {
   const name = cleanText(payload.name);
   const description = cleanText(payload.description);
   const tagline = cleanText(payload.tagline);
-
-  return {
+  const normalized = {
     slug: cleanText(payload.slug).toLowerCase(),
     name,
     tagline,
@@ -357,9 +357,11 @@ function normalizePayload(payload: BusinessPayload): NormalizedBusinessPayload {
           .filter((item) => item.title || item.caption || item.imageUrl)
       : [],
   };
+
+  return applyTemplateDefaults(normalized, cleanText(payload.templateKey) || null);
 }
 
-function validateBusinessPayload(payload: NormalizedBusinessPayload) {
+function validateBusinessPayload(payload: NormalizedBusinessPayload, templateKey: string | null) {
   if (!payload.slug || !payload.name) {
     throw createHttpError(400, "Slug dan nama bisnis wajib diisi.");
   }
@@ -405,6 +407,31 @@ function validateBusinessPayload(payload: NormalizedBusinessPayload) {
       throw createHttpError(400, "Setiap item galeri wajib punya judul dan gambar.");
     }
   }
+
+  const templateConfig = getTemplateFormConfig(templateKey);
+
+  if (templateConfig?.fixedTestimonialCount && payload.testimonials.length !== templateConfig.fixedTestimonialCount) {
+    throw createHttpError(400, `Template ini wajib memiliki ${templateConfig.fixedTestimonialCount} testimoni.`);
+  }
+
+  if (templateConfig?.fixedGalleryCount && payload.galleryItems.length !== templateConfig.fixedGalleryCount) {
+    throw createHttpError(400, `Template ini wajib memiliki ${templateConfig.fixedGalleryCount} item galeri.`);
+  }
+}
+
+async function requireTemplateRow(templateId: number | null) {
+  if (!templateId) {
+    throw createHttpError(400, "Template bisnis wajib dipilih.");
+  }
+
+  const rows = await fetchTemplateRows([templateId]);
+  const template = rows[0] ?? null;
+
+  if (!template) {
+    throw createHttpError(404, "Template bisnis tidak ditemukan.");
+  }
+
+  return template;
 }
 
 async function getAccessibleBusinessIds(admin?: AdminIdentity) {
@@ -734,8 +761,10 @@ export async function createBusinessRecord(payload: BusinessPayload, admin: Admi
     throw createHttpError(403, "Hanya owner yang bisa membuat bisnis baru.");
   }
 
-  const normalized = normalizePayload(payload);
-  validateBusinessPayload(normalized);
+  const baseNormalized = normalizePayload(payload);
+  const template = await requireTemplateRow(baseNormalized.templateId);
+  const normalized = applyTemplateDefaults(baseNormalized, template.key);
+  validateBusinessPayload(normalized, template.key);
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -796,8 +825,10 @@ export async function createBusinessRecord(payload: BusinessPayload, admin: Admi
 export async function updateBusinessRecord(id: number, payload: BusinessPayload, admin: AdminIdentity) {
   await ensureBusinessAccess(admin, id);
 
-  const normalized = normalizePayload(payload);
-  validateBusinessPayload(normalized);
+  const baseNormalized = normalizePayload(payload);
+  const template = await requireTemplateRow(baseNormalized.templateId);
+  const normalized = applyTemplateDefaults(baseNormalized, template.key);
+  validateBusinessPayload(normalized, template.key);
 
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase

@@ -32,6 +32,11 @@
   --color-brand-secondary: var(--brand-light);
   --font-sans: var(--font-body);
   --font-display: var(--font-display);
+  --font-expressive: var(--font-expressive-base);
+  --font-graphic: var(--font-graphic-base);
+  --font-mono-alt: var(--font-mono-base);
+  --font-editorial-alt: var(--font-editorial-base);
+  --font-tech: var(--font-tech-base);
 }
 
 * {
@@ -85,6 +90,30 @@ html {
       34% 0%,
       74% 0%,
       100% 0%;
+  }
+}
+
+@keyframes prismDrift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+
+  50% {
+    transform: translate3d(0, -10px, 0) rotate(2deg);
+  }
+
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+}
+
+@keyframes ledgerSweep {
+  0% {
+    background-position: 0 0;
+  }
+
+  100% {
+    background-position: 120px 0;
   }
 }
 
@@ -289,6 +318,23 @@ h6 {
 
 .text-balance {
   text-wrap: balance;
+}
+
+.prism-float {
+  animation: prismDrift 12s ease-in-out infinite;
+}
+
+.ledger-grid {
+  background-image:
+    linear-gradient(rgba(17, 47, 71, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(17, 47, 71, 0.08) 1px, transparent 1px);
+  background-size: 34px 34px;
+}
+
+.ledger-scan {
+  background-image: linear-gradient(90deg, rgba(191, 121, 83, 0.18) 0, rgba(191, 121, 83, 0.18) 24px, transparent 24px, transparent 120px);
+  background-size: 120px 100%;
+  animation: ledgerSweep 14s linear infinite;
 }
 
 .nature-stage {

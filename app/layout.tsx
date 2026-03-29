@@ -1,5 +1,14 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, Inter, Space_Grotesk } from "next/font/google";
+import {
+  Archivo_Black,
+  Bricolage_Grotesque,
+  Chakra_Petch,
+  Cormorant_Garamond,
+  DM_Serif_Display,
+  Inter,
+  Space_Grotesk,
+  Space_Mono,
+} from "next/font/google";
 import "./globals.css";
 
 const bodyFont = Inter({
@@ -21,6 +30,40 @@ const accentFont = Space_Grotesk({
   display: "swap",
 });
 
+const expressiveFont = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-expressive-base",
+  display: "swap",
+});
+
+const graphicFont = Archivo_Black({
+  subsets: ["latin"],
+  variable: "--font-graphic-base",
+  weight: "400",
+  display: "swap",
+});
+
+const monoAltFont = Space_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono-base",
+  weight: ["400", "700"],
+  display: "swap",
+});
+
+const editorialAltFont = Cormorant_Garamond({
+  subsets: ["latin"],
+  variable: "--font-editorial-base",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
+const techFont = Chakra_Petch({
+  subsets: ["latin"],
+  variable: "--font-tech-base",
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title: "Bisnis.me Builder",
@@ -34,7 +77,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${bodyFont.variable} ${displayFont.variable} ${accentFont.variable}`}>
+      <body
+        className={`${bodyFont.variable} ${displayFont.variable} ${accentFont.variable} ${expressiveFont.variable} ${graphicFont.variable} ${monoAltFont.variable} ${editorialAltFont.variable} ${techFont.variable}`}
+      >
         {children}
       </body>
     </html>

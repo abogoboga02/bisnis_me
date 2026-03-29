@@ -7,11 +7,32 @@ import { MapPin, MessageCircle, Phone, Quote } from "lucide-react";
 import { AnimatedSection } from "@/components/animated-section";
 import { AtelierMosaicPage } from "@/components/atelier-mosaic-page";
 import { FloatingWhatsApp } from "@/components/floating-whatsapp";
+import { HarborLedgerPage } from "@/components/harbor-ledger-page";
+import { NoirGridPage } from "@/components/noir-grid-page";
+import { PrismRiotPage } from "@/components/prism-riot-page";
+import { SignalFramePage } from "@/components/signal-frame-page";
 import { iconMap } from "@/lib/icon-map";
 import type { Business } from "@/lib/types";
 
 export function LandingPage({ business }: { business: Business }) {
   const whatsappHref = business.whatsapp ? `https://wa.me/${business.whatsapp.replace(/\D/g, "")}` : "#";
+
+  if (business.templateKey === "signal-frame") {
+    return <SignalFramePage business={business} whatsappHref={whatsappHref} />;
+  }
+
+  if (business.templateKey === "noir-grid") {
+    return <NoirGridPage business={business} whatsappHref={whatsappHref} />;
+  }
+
+  if (business.templateKey === "prism-riot") {
+    return <PrismRiotPage business={business} whatsappHref={whatsappHref} />;
+  }
+
+  if (business.templateKey === "harbor-ledger") {
+    return <HarborLedgerPage business={business} whatsappHref={whatsappHref} />;
+  }
+
   if (business.templateKey === "atelier-mosaic") {
     return <AtelierMosaicPage business={business} whatsappHref={whatsappHref} />;
   }

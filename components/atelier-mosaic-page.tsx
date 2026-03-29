@@ -151,13 +151,19 @@ export function AtelierMosaicPage({
       </EditorialSection>
 
       <EditorialSection id="gallery" label="Gallery" title={business.galleryTitle} intro={business.galleryIntro}>
-        <div className="grid gap-5 lg:grid-cols-[1.618fr_1fr]">
-          <div className="grid gap-5">
-            {galleryItems.slice(0, 2).map((item, index) => <GalleryCard key={`${item.id}-${index}`} item={item} tall={index === 0} />)}
-          </div>
-          <div className="grid gap-5">
-            {galleryItems.slice(2).map((item, index) => <GalleryCard key={`${item.id}-${index + 2}`} item={item} tall={index === 0} />)}
-          </div>
+        <div className="grid gap-5 lg:grid-cols-[1.18fr_0.82fr] lg:grid-rows-[17rem_13rem_auto]">
+          {galleryItems[0] ? (
+            <div className="lg:row-span-2">
+              <GalleryCard item={galleryItems[0]} tall />
+            </div>
+          ) : null}
+          {galleryItems[1] ? <GalleryCard item={galleryItems[1]} /> : null}
+          {galleryItems[2] ? <GalleryCard item={galleryItems[2]} /> : null}
+          {galleryItems[3] ? (
+            <div className="lg:col-span-2">
+              <GalleryCard item={galleryItems[3]} wide />
+            </div>
+          ) : null}
         </div>
       </EditorialSection>
 
@@ -249,12 +255,14 @@ function MetricCard({
 function GalleryCard({
   item,
   tall = false,
+  wide = false,
 }: {
   item: Business["galleryItems"][number];
   tall?: boolean;
+  wide?: boolean;
 }) {
   return (
-    <motion.article initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55 }} className={`group relative overflow-hidden rounded-[2.2rem] border border-[#1c302a]/10 bg-white/55 shadow-[0_20px_70px_rgba(28,48,42,0.08)] ${tall ? "min-h-[23rem]" : "min-h-[18rem]"}`}>
+    <motion.article initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, amount: 0.2 }} transition={{ duration: 0.55 }} className={`group relative overflow-hidden rounded-[2.2rem] border border-[#1c302a]/10 bg-white/55 shadow-[0_20px_70px_rgba(28,48,42,0.08)] ${wide ? "min-h-[15rem]" : tall ? "min-h-[23rem]" : "min-h-[18rem]"}`}>
       {item.imageUrl ? (
         <Image src={item.imageUrl} alt={item.title} fill unoptimized className="object-cover transition duration-700 group-hover:scale-105" />
       ) : (

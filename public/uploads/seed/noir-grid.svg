@@ -1,0 +1,30 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#050505"/>
+  <g opacity="0.16" stroke="#FFFFFF">
+    <path d="M0 120H1200"/>
+    <path d="M0 240H1200"/>
+    <path d="M0 360H1200"/>
+    <path d="M0 480H1200"/>
+    <path d="M0 600H1200"/>
+    <path d="M120 0V720"/>
+    <path d="M240 0V720"/>
+    <path d="M360 0V720"/>
+    <path d="M480 0V720"/>
+    <path d="M600 0V720"/>
+    <path d="M720 0V720"/>
+    <path d="M840 0V720"/>
+    <path d="M960 0V720"/>
+    <path d="M1080 0V720"/>
+  </g>
+  <rect x="96" y="96" width="440" height="528" stroke="#D4FF47" stroke-opacity="0.35" stroke-width="2"/>
+  <rect x="600" y="96" width="504" height="184" fill="#0D0D0D" stroke="#D4FF47" stroke-opacity="0.35" stroke-width="2"/>
+  <rect x="600" y="312" width="504" height="312" fill="#111111"/>
+  <path d="M600 468H1104" stroke="#D4FF47" stroke-width="6"/>
+  <text x="132" y="248" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="94" font-weight="700" letter-spacing="-4">NOIR</text>
+  <text x="132" y="344" fill="#D4FF47" font-family="Arial, sans-serif" font-size="94" font-weight="700" letter-spacing="-4">GRID</text>
+  <text x="132" y="420" fill="#FFFFFF" fill-opacity="0.56" font-family="Courier New, monospace" font-size="22" letter-spacing="7">TERMINAL LAYOUT SYSTEM</text>
+  <text x="636" y="166" fill="#D4FF47" font-family="Courier New, monospace" font-size="20" letter-spacing="6">SYSTEM ONLINE</text>
+  <text x="636" y="236" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="50" font-weight="700">Command Interface</text>
+  <text x="636" y="392" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="24">Dark, precise, and high-control visual language.</text>
+  <text x="636" y="548" fill="#D4FF47" font-family="Courier New, monospace" font-size="20" letter-spacing="6">PROOF FEED</text>
+</svg>

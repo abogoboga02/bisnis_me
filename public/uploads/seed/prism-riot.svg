@@ -1,0 +1,15 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#FBF5EA"/>
+  <path d="M88 88H514L470 620H64L88 88Z" fill="#0C1F4D"/>
+  <path d="M560 80H1120L1072 334H516L560 80Z" fill="#215CFF"/>
+  <path d="M576 376H1120L1040 640H504L576 376Z" fill="#FF5E4D"/>
+  <path d="M160 420H446L402 640H118L160 420Z" fill="#D7FF48"/>
+  <text x="124" y="236" fill="#FBF5EA" font-family="Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="-4">PRISM</text>
+  <text x="124" y="332" fill="#FBF5EA" font-family="Arial, sans-serif" font-size="92" font-weight="700" letter-spacing="-4">RIOT</text>
+  <text x="124" y="398" fill="#FBF5EA" fill-opacity="0.62" font-family="Courier New, monospace" font-size="22" letter-spacing="7">ANGULAR CAMPAIGN TEMPLATE</text>
+  <text x="604" y="174" fill="#FFFFFF" font-family="Courier New, monospace" font-size="20" letter-spacing="6">SCENE ZERO</text>
+  <text x="604" y="242" fill="#FFFFFF" font-family="Arial, sans-serif" font-size="48" font-weight="700">Experimental brand geometry.</text>
+  <text x="604" y="474" fill="#FFFFFF" font-family="Courier New, monospace" font-size="20" letter-spacing="6">TOTEMS / FRAGMENTS / DOCK</text>
+  <circle cx="1032" cy="566" r="58" fill="#0C1F4D"/>
+  <circle cx="962" cy="566" r="22" fill="#FBF5EA"/>
+</svg>

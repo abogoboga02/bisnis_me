@@ -1,0 +1,28 @@
+<svg width="1200" height="720" viewBox="0 0 1200 720" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="720" fill="#EEF3F6"/>
+  <g opacity="0.16" stroke="#112F47">
+    <path d="M96 96H1104"/>
+    <path d="M96 176H1104"/>
+    <path d="M96 256H1104"/>
+    <path d="M96 336H1104"/>
+    <path d="M96 416H1104"/>
+    <path d="M96 496H1104"/>
+    <path d="M96 576H1104"/>
+    <path d="M192 96V624"/>
+    <path d="M336 96V624"/>
+    <path d="M480 96V624"/>
+    <path d="M624 96V624"/>
+    <path d="M768 96V624"/>
+    <path d="M912 96V624"/>
+  </g>
+  <rect x="96" y="96" width="504" height="528" fill="#FFFFFF" stroke="#112F47" stroke-opacity="0.14" stroke-width="2"/>
+  <rect x="648" y="96" width="456" height="240" fill="#D9E5EC" stroke="#112F47" stroke-opacity="0.14" stroke-width="2"/>
+  <rect x="648" y="384" width="456" height="240" fill="#112F47"/>
+  <rect x="648" y="352" width="160" height="16" fill="#BF7953"/>
+  <text x="140" y="220" fill="#112F47" font-family="Georgia, serif" font-size="92" font-weight="700" letter-spacing="-4">Harbor</text>
+  <text x="140" y="304" fill="#112F47" font-family="Georgia, serif" font-size="92" font-weight="700" letter-spacing="-4">Ledger</text>
+  <text x="140" y="372" fill="#112F47" fill-opacity="0.56" font-family="Courier New, monospace" font-size="22" letter-spacing="7">BLUEPRINT BUSINESS TEMPLATE</text>
+  <text x="684" y="172" fill="#112F47" font-family="Courier New, monospace" font-size="20" letter-spacing="6">MANIFEST HEADER</text>
+  <text x="684" y="244" fill="#112F47" font-family="Georgia, serif" font-size="46" font-weight="700">Structured calm for serious brands.</text>
+  <text x="684" y="484" fill="#EEF3F6" font-family="Courier New, monospace" font-size="20" letter-spacing="6">CONTACT MANIFEST</text>
+</svg>
