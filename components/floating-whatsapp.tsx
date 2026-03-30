@@ -2,13 +2,14 @@
 
 import { motion } from "framer-motion";
 import { MessageCircle } from "lucide-react";
+import { buildWhatsAppHref } from "@/lib/contact-utils";
 
 export function FloatingWhatsApp({ whatsapp }: { whatsapp: string }) {
   if (!whatsapp) {
     return null;
   }
 
-  const href = `https://wa.me/${whatsapp.replace(/\D/g, "")}`;
+  const href = buildWhatsAppHref(whatsapp);
 
   return (
     <motion.a

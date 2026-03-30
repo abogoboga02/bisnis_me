@@ -13,9 +13,27 @@ function getServices(business: Business): Service[] {
   return business.services.length > 0
     ? business.services
     : [
-        { id: 1, businessId: 0, name: "Planning Layer", description: business.description, icon: "layout-template" },
-        { id: 2, businessId: 0, name: "Execution Notes", description: business.description, icon: "briefcase-business" },
-        { id: 3, businessId: 0, name: "Lead Routes", description: business.description, icon: "phone-call" },
+        {
+          id: 1,
+          businessId: 0,
+          name: business.servicesTitle || business.aboutTitle || business.name || "",
+          description: business.servicesIntro || business.aboutIntro || business.description || business.tagline || "",
+          icon: "layout-template",
+        },
+        {
+          id: 2,
+          businessId: 0,
+          name: business.testimonialsTitle || business.contactTitle || business.name || "",
+          description: business.testimonialsIntro || business.contactIntro || business.description || business.tagline || "",
+          icon: "briefcase-business",
+        },
+        {
+          id: 3,
+          businessId: 0,
+          name: business.galleryTitle || business.heroLabel || business.name || "",
+          description: business.galleryIntro || business.boardmemoBody || business.description || business.tagline || "",
+          icon: "phone-call",
+        },
       ];
 }
 
@@ -23,8 +41,30 @@ function getTestimonials(business: Business): Testimonial[] {
   return business.testimonials.length > 0
     ? business.testimonials
     : [
-        { id: 1, businessId: 0, name: "Partner Office", role: "Director", quote: business.tagline, sortOrder: 0 },
-        { id: 2, businessId: 0, name: "Client Team", role: "Procurement", quote: "Nuansanya presisi, formal, tapi tetap modern dan tidak kaku.", sortOrder: 1 },
+        {
+          id: 1,
+          businessId: 0,
+          name: business.name,
+          role: business.aboutTitle || business.heroLabel || business.templateName || "",
+          quote: business.tagline || business.description || "",
+          sortOrder: 0,
+        },
+        {
+          id: 2,
+          businessId: 0,
+          name: business.servicesTitle || business.name || "",
+          role: business.servicesTitle || business.heroLabel || business.templateName || "",
+          quote: business.testimonialsIntro || business.servicesIntro || business.description || business.tagline || "",
+          sortOrder: 1,
+        },
+        {
+          id: 3,
+          businessId: 0,
+          name: business.contactTitle || business.name || "",
+          role: business.contactTitle || business.galleryTitle || business.templateName || "",
+          quote: business.contactIntro || business.boardmemoBody || business.description || business.tagline || "",
+          sortOrder: 2,
+        },
       ];
 }
 
@@ -32,9 +72,38 @@ function getGallery(business: Business): GalleryItem[] {
   return business.galleryItems.length > 0
     ? business.galleryItems
     : [
-        { id: 1, businessId: 0, title: "Manifest Cover", caption: "Visual utama untuk mempertegas identitas brand.", imageUrl: "", sortOrder: 0 },
-        { id: 2, businessId: 0, title: "Project Notes", caption: "Tambahkan foto hasil kerja, fasilitas, atau suasana layanan.", imageUrl: "", sortOrder: 1 },
-        { id: 3, businessId: 0, title: "Dock View", caption: "Frame penutup yang membantu CTA terasa lebih matang.", imageUrl: "", sortOrder: 2 },
+        {
+          id: 1,
+          businessId: 0,
+          title: business.galleryTitle || business.name || "",
+          caption: business.galleryIntro || business.description || business.tagline || "",
+          imageUrl: "",
+          sortOrder: 0,
+        },
+        {
+          id: 2,
+          businessId: 0,
+          title: business.aboutTitle || business.name || "",
+          caption: business.aboutIntro || business.description || business.tagline || "",
+          imageUrl: "",
+          sortOrder: 1,
+        },
+        {
+          id: 3,
+          businessId: 0,
+          title: business.servicesTitle || business.name || "",
+          caption: business.servicesIntro || business.description || business.tagline || "",
+          imageUrl: "",
+          sortOrder: 2,
+        },
+        {
+          id: 4,
+          businessId: 0,
+          title: business.contactTitle || business.name || "",
+          caption: business.contactIntro || business.boardmemoBody || business.description || business.tagline || "",
+          imageUrl: "",
+          sortOrder: 3,
+        },
       ];
 }
 
@@ -45,13 +114,47 @@ export function HarborLedgerPage({
   business: Business;
   whatsappHref: string;
 }) {
-  const services = getServices(business);
-  const testimonials = getTestimonials(business);
-  const galleryItems = getGallery(business);
+  const services = getServices(business).slice(0, 3);
+  const testimonials = getTestimonials(business).slice(0, 3);
+  const galleryItems = getGallery(business).slice(0, 4);
+  const heroEyebrow = business.aboutIntro || business.description || business.contactIntro || business.heroLabel || business.name;
+  const aboutHeading = business.aboutTitle || business.name;
+  const servicesHeading = business.servicesTitle || business.heroLabel || business.name;
+  const proofHeading = business.testimonialsTitle || business.galleryTitle || business.name;
+  const contactHeading = business.contactTitle || business.heroCtaLabel || business.name;
+  const aboutLabel = business.aboutTitle || business.heroLabel || business.templateName || business.name;
+  const servicesLabel = business.servicesTitle || business.heroLabel || business.templateName || business.name;
+  const proofLabel = business.testimonialsTitle || business.galleryTitle || business.templateName || business.name;
+  const contactLabel = business.contactTitle || business.heroLabel || business.templateName || business.name;
+  const ledgerLabel = business.boardmemoLabel || business.heroLabel || business.templateName;
+  const manifestLabel = business.galleryTitle || business.heroLabel || business.templateName;
+  const partnerNoteLabel = business.testimonialsTitle || business.heroLabel || business.templateName;
+  const safePhone = business.phone || business.whatsapp || business.heroCtaLabel || business.name;
+  const safeWhatsapp = business.whatsapp || business.phone || business.heroCtaLabel || business.name;
+  const safeAddress = business.address || business.contactIntro || business.description || business.name;
+  const aboutCards = [
+    business.aboutIntro || business.description || business.tagline,
+    business.servicesIntro || business.description || business.tagline,
+    business.galleryIntro || business.contactIntro || business.description || business.tagline,
+  ];
+  const ledgerStats = [
+    {
+      label: ledgerLabel,
+      value: business.aboutTitle || business.heroLabel || business.templateName || business.name,
+    },
+    {
+      label: business.servicesTitle || business.heroLabel || business.templateName,
+      value: String(services.length).padStart(2, "0"),
+    },
+    {
+      label: business.testimonialsTitle || business.galleryTitle || business.templateName,
+      value: String(testimonials.length).padStart(2, "0"),
+    },
+  ];
 
   return (
     <main className="ledger-grid overflow-hidden bg-[#eef3f6] font-expressive text-[#112f47]">
-      <section className="relative isolate px-6 pb-20 pt-8 md:px-10 lg:px-14">
+      <section className="relative isolate px-5 pb-16 pt-6 md:px-10 md:pb-20 md:pt-8 lg:px-14">
         <div className="absolute inset-0 -z-20 bg-[radial-gradient(circle_at_12%_14%,rgba(191,121,83,0.14),transparent_24%),radial-gradient(circle_at_86%_16%,rgba(17,47,71,0.12),transparent_22%),linear-gradient(180deg,#eef3f6_0%,#e6edf1_58%,#f5f8fb_100%)]" />
         <div className="ledger-scan absolute inset-x-0 top-0 -z-10 h-full opacity-55" />
 
@@ -60,7 +163,7 @@ export function HarborLedgerPage({
             <Link href="/" className="font-mono-alt text-xs uppercase tracking-[0.34em] text-[#112f47]/60">
               bisnis.me
             </Link>
-            <Link href="/admin/dashboard" className="rounded-[1.1rem] border border-[#112f47]/12 bg-white/70 px-4 py-2 text-sm font-semibold text-[#112f47] transition hover:bg-white">
+            <Link href="/admin/dashboard" className="rounded-[1.1rem] border border-[#112f47]/12 bg-white/70 px-3 py-2 text-xs font-semibold text-[#112f47] transition hover:bg-white sm:px-4 sm:text-sm">
               Admin
             </Link>
           </header>
@@ -74,7 +177,7 @@ export function HarborLedgerPage({
                 className="inline-flex items-center gap-3 rounded-full border border-[#112f47]/12 bg-white/72 px-4 py-2 font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]"
               >
                 <span className="h-2.5 w-2.5 rounded-full bg-[#bf7953]" />
-                {business.heroLabel || business.templateName || "Harbor Ledger"}
+                {business.heroLabel || business.templateName || business.name}
               </motion.div>
 
               <motion.div
@@ -83,26 +186,26 @@ export function HarborLedgerPage({
                 transition={{ duration: 0.7, delay: 0.08 }}
                 className="space-y-6"
               >
-                <p className="font-mono-alt text-xs uppercase tracking-[0.34em] text-[#112f47]/46">
-                  Blueprint calm, ledger precision, and a premium administrative feel.
+                <p className="font-mono-alt text-[10px] uppercase tracking-[0.28em] text-[#112f47]/46 sm:text-xs sm:tracking-[0.34em]">
+                  {heroEyebrow}
                 </p>
-                <h1 className="max-w-4xl font-editorial-alt text-[clamp(3.4rem,8vw,7rem)] leading-[0.9] tracking-[-0.05em] text-[#112f47]">
+                <h1 className="max-w-4xl font-editorial-alt text-[clamp(2.8rem,11vw,7rem)] leading-[0.9] tracking-[-0.05em] text-[#112f47]">
                   {business.name}
                 </h1>
-                <p className="max-w-2xl text-lg leading-8 text-[#112f47]/72">{business.tagline}</p>
+                <p className="max-w-2xl text-base leading-7 text-[#112f47]/72 sm:text-lg sm:leading-8">{business.tagline}</p>
               </motion.div>
 
               <motion.div
                 initial={{ opacity: 0, y: 22 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, delay: 0.14 }}
-                className="flex flex-wrap gap-4"
+                className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4"
               >
-                <a href={business.heroCtaUrl} className="inline-flex items-center gap-2 rounded-full bg-[#112f47] px-6 py-3 font-semibold text-[#eef3f6] transition hover:-translate-y-1">
+                <a href={business.heroCtaUrl} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#112f47] px-6 py-3 font-semibold text-[#eef3f6] transition hover:-translate-y-1 sm:w-auto">
                   {business.heroCtaLabel}
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
-                <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-[#112f47]/14 bg-[#bf7953] px-6 py-3 font-semibold text-white transition hover:-translate-y-1">
+                <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#112f47]/14 bg-[#bf7953] px-6 py-3 font-semibold text-white transition hover:-translate-y-1 sm:w-auto">
                   WhatsApp
                   <MessageCircle className="h-4 w-4" />
                 </a>
@@ -116,19 +219,15 @@ export function HarborLedgerPage({
               className="grid gap-4"
             >
               <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
-                {[
-                  { label: "Ledger", value: "Active" },
-                  { label: "Services", value: String(services.length).padStart(2, "0") },
-                  { label: "Proof", value: String(testimonials.length).padStart(2, "0") },
-                ].map((item) => (
+                {ledgerStats.map((item) => (
                   <div key={item.label} className="rounded-[1.6rem] border border-[#112f47]/12 bg-white/76 p-5">
                     <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]/48">{item.label}</p>
-                    <p className="mt-4 font-editorial-alt text-3xl font-semibold text-[#112f47]">{item.value}</p>
+                    <p className="mt-4 font-editorial-alt text-[1.7rem] font-semibold text-[#112f47] sm:text-3xl">{item.value}</p>
                   </div>
                 ))}
               </div>
 
-              <div className="relative min-h-[27rem] overflow-hidden rounded-[2rem] border border-[#112f47]/12 bg-[#c7d7e2] shadow-[0_24px_80px_rgba(17,47,71,0.08)]">
+              <div className="relative min-h-[23rem] overflow-hidden rounded-[2rem] border border-[#112f47]/12 bg-[#c7d7e2] shadow-[0_24px_80px_rgba(17,47,71,0.08)] sm:min-h-[27rem]">
                 {business.heroImage ? (
                   <Image src={business.heroImage} alt={business.name} fill priority unoptimized className="object-cover opacity-82" />
                 ) : (
@@ -136,7 +235,7 @@ export function HarborLedgerPage({
                 )}
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(238,243,246,0.08),rgba(17,47,71,0.08),rgba(17,47,71,0.44))]" />
                 <div className="absolute bottom-0 left-0 right-0 border-t border-white/20 bg-[#112f47]/68 p-5 text-white">
-                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-white/54">Manifest Header</p>
+                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-white/54">{manifestLabel}</p>
                   <p className="mt-3 max-w-md text-sm leading-7 text-white/84">{business.description}</p>
                 </div>
               </div>
@@ -145,21 +244,17 @@ export function HarborLedgerPage({
         </div>
       </section>
 
-      <AnimatedSection id="about" className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-14" delay={0.05}>
+      <AnimatedSection id="about" className="mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-16 lg:px-14" delay={0.05}>
         <div className="grid gap-4 lg:grid-cols-[0.78fr_1.22fr]">
           <div className="rounded-[2rem] border border-[#112f47]/12 bg-white/80 p-8">
-            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{business.aboutTitle}</p>
-            <h2 className="mt-5 font-editorial-alt text-5xl font-semibold leading-[0.94] text-[#112f47]">
-              A calmer, more architectural business story.
+            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{aboutLabel}</p>
+            <h2 className="mt-5 font-editorial-alt text-[2.4rem] font-semibold leading-[0.94] text-[#112f47] sm:text-5xl">
+              {aboutHeading}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#112f47]/74">{business.aboutIntro || business.description}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              "Blueprint rhythm memberi rasa presisi tanpa terasa dingin.",
-              "Warna biru baja dan tembaga terasa profesional, matang, dan terpercaya.",
-              "Sangat cocok untuk bisnis jasa, konsultan, konstruksi, logistik, atau corporate service.",
-            ].map((copy, index) => (
+            {aboutCards.map((copy, index) => (
               <div key={copy} className={`rounded-[1.8rem] border p-6 ${index === 1 ? "border-[#bf7953]/18 bg-[#bf7953]/12" : "border-[#112f47]/12 bg-white/76"}`}>
                 <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]/48">0{index + 1}</p>
                 <p className="mt-4 text-sm leading-7 text-[#112f47]/76">{copy}</p>
@@ -169,12 +264,12 @@ export function HarborLedgerPage({
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="services" className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-14" delay={0.08}>
+      <AnimatedSection id="services" className="mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-16 lg:px-14" delay={0.08}>
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{business.servicesTitle}</p>
-            <h2 className="mt-4 font-editorial-alt text-5xl font-semibold leading-[0.94] text-[#112f47]">
-              Services mapped like blueprint modules.
+            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{servicesLabel}</p>
+            <h2 className="mt-4 font-editorial-alt text-[2.4rem] font-semibold leading-[0.94] text-[#112f47] sm:text-5xl">
+              {servicesHeading}
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-[#112f47]/70">{business.servicesIntro}</p>
@@ -206,12 +301,12 @@ export function HarborLedgerPage({
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="proof" className="mx-auto max-w-7xl px-6 py-16 md:px-10 lg:px-14" delay={0.1}>
+      <AnimatedSection id="proof" className="mx-auto max-w-7xl px-5 py-14 md:px-10 md:py-16 lg:px-14" delay={0.1}>
         <div className="mb-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{business.testimonialsTitle}</p>
-            <h2 className="mt-4 font-editorial-alt text-5xl font-semibold leading-[0.94] text-[#112f47]">
-              Proof presented like a polished project manifest.
+            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#bf7953]">{proofLabel}</p>
+            <h2 className="mt-4 font-editorial-alt text-[2.4rem] font-semibold leading-[0.94] text-[#112f47] sm:text-5xl">
+              {proofHeading}
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-[#112f47]/70">{business.testimonialsIntro}</p>
@@ -226,8 +321,8 @@ export function HarborLedgerPage({
             )}
             <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_0%,rgba(17,47,71,0.08)_42%,rgba(17,47,71,0.62)_100%)]" />
             <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-              <p className="font-editorial-alt text-3xl font-semibold">{galleryItems[0]?.title || "Manifest Cover"}</p>
-              <p className="mt-2 max-w-md text-sm leading-7 text-white/80">{galleryItems[0]?.caption || "Tambahkan visual utama untuk memperkuat kredibilitas halaman."}</p>
+              <p className="font-editorial-alt text-3xl font-semibold">{galleryItems[0]?.title || manifestLabel}</p>
+              <p className="mt-2 max-w-md text-sm leading-7 text-white/80">{galleryItems[0]?.caption || business.galleryIntro || business.description || business.tagline}</p>
             </div>
           </div>
 
@@ -235,7 +330,7 @@ export function HarborLedgerPage({
             {testimonials.slice(0, 2).map((item, index) => (
               <div key={`${item.id}-${index}`} className={`rounded-[1.8rem] border p-6 ${index === 0 ? "border-[#112f47]/12 bg-white/80" : "border-[#bf7953]/18 bg-[#bf7953]/12"}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]/48">Partner Note</p>
+                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]/48">{partnerNoteLabel}</p>
                   <Quote className="h-4 w-4 text-[#bf7953]" />
                 </div>
                 <p className="mt-4 text-base leading-8 text-[#112f47]/80">{item.quote}</p>
@@ -256,30 +351,30 @@ export function HarborLedgerPage({
         </div>
       </AnimatedSection>
 
-      <AnimatedSection id="contact" className="mx-auto max-w-7xl px-6 pb-24 pt-16 md:px-10 lg:px-14" delay={0.12}>
+      <AnimatedSection id="contact" className="mx-auto max-w-7xl px-5 pb-20 pt-14 md:px-10 md:pb-24 md:pt-16 lg:px-14" delay={0.12}>
         <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[2rem] border border-[#112f47]/12 bg-[#112f47] p-8 text-[#eef3f6]">
-            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#eef3f6]/56">{business.contactTitle}</p>
-            <h2 className="mt-5 font-editorial-alt text-5xl font-semibold leading-[0.92]">
-              Close with a formal, confident contact manifest.
+            <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#eef3f6]/56">{contactLabel}</p>
+            <h2 className="mt-5 font-editorial-alt text-[2.4rem] font-semibold leading-[0.92] sm:text-5xl">
+              {contactHeading}
             </h2>
             <p className="mt-5 text-base leading-8 text-[#eef3f6]/80">{business.contactIntro}</p>
-            <div className="mt-8 flex flex-wrap gap-4">
-              <a href={business.heroCtaUrl} className="inline-flex items-center gap-2 rounded-full bg-[#bf7953] px-6 py-3 font-semibold text-white">
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
+              <a href={business.heroCtaUrl} className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#bf7953] px-6 py-3 font-semibold text-white sm:w-auto">
                 {business.heroCtaLabel}
                 <ArrowUpRight className="h-4 w-4" />
               </a>
-              <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-full border border-white/16 px-6 py-3 font-semibold text-white">
-                Chat WhatsApp
+              <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/16 px-6 py-3 font-semibold text-white sm:w-auto">
+                WhatsApp
                 <MessageCircle className="h-4 w-4" />
               </a>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <LedgerCell icon={<Phone className="h-5 w-5" />} label="Phone" value={business.phone} href={`tel:${business.phone}`} />
-            <LedgerCell icon={<MessageCircle className="h-5 w-5" />} label="WhatsApp" value={business.whatsapp} href={whatsappHref} />
-            <LedgerCell icon={<MapPin className="h-5 w-5" />} label="Address" value={business.address} />
+            <LedgerCell icon={<Phone className="h-5 w-5" />} label="Phone" value={safePhone} href={business.phone ? `tel:${business.phone}` : undefined} />
+            <LedgerCell icon={<MessageCircle className="h-5 w-5" />} label="WhatsApp" value={safeWhatsapp} href={business.whatsapp ? whatsappHref : undefined} />
+            <LedgerCell icon={<MapPin className="h-5 w-5" />} label="Address" value={safeAddress} />
           </div>
         </div>
       </AnimatedSection>
@@ -304,7 +399,7 @@ function LedgerCell({
     <div className="h-full rounded-[1.7rem] border border-[#112f47]/12 bg-white/80 p-5">
       <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#112f47] text-[#eef3f6]">{icon}</div>
       <p className="mt-4 font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#112f47]/48">{label}</p>
-      <p className="mt-3 text-sm font-semibold leading-7 text-[#112f47]">{value}</p>
+      <p className="mt-3 text-sm font-semibold leading-6 text-[#112f47] sm:leading-7">{value}</p>
     </div>
   );
 

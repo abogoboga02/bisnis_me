@@ -3,6 +3,9 @@ import type { Business } from "@/lib/types";
 export type TemplateFormConfig = {
   key: string;
   specialAdminForm: boolean;
+  serviceSlotCount?: number;
+  minFilledServiceCount?: number;
+  maxFilledServiceCount?: number;
   fixedGalleryCount?: number;
   fixedTestimonialCount?: number;
   defaults: Partial<Business>;
@@ -12,6 +15,11 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
   "signal-frame": {
     key: "signal-frame",
     specialAdminForm: false,
+    serviceSlotCount: 3,
+    minFilledServiceCount: 3,
+    maxFilledServiceCount: 3,
+    fixedGalleryCount: 4,
+    fixedTestimonialCount: 3,
     defaults: {
       heroLabel: "Signal Frame",
       aboutTitle: "Brand Snapshot",
@@ -24,11 +32,19 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
       galleryIntro: "Pilih frame visual paling kuat untuk mempercepat kesan pertama.",
       contactTitle: "Contact Grid",
       contactIntro: "Tutup halaman dengan CTA yang jelas dan jalur kontak yang mudah diikuti.",
+      boardmemoLabel: "Signal Note",
+      boardmemoTitle: "Frame strategis untuk menegaskan arah presentasi brand.",
+      boardmemoBody: "Gunakan panel memo ini untuk menaruh arahan singkat, headline internal, atau catatan fokus yang ingin ikut terbaca di area hero.",
     },
   },
   "noir-grid": {
     key: "noir-grid",
     specialAdminForm: false,
+    serviceSlotCount: 3,
+    minFilledServiceCount: 3,
+    maxFilledServiceCount: 3,
+    fixedGalleryCount: 4,
+    fixedTestimonialCount: 3,
     defaults: {
       heroLabel: "Noir Grid",
       aboutTitle: "Protocol",
@@ -41,11 +57,19 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
       galleryIntro: "Gunakan visual sebagai bukti kerja, hasil, atau suasana brand secara langsung.",
       contactTitle: "Command Link",
       contactIntro: "CTA utama, telepon, dan WhatsApp ditampilkan seperti panel kontrol akhir.",
+      boardmemoLabel: "System Note",
+      boardmemoTitle: "Aksen memo untuk menambah konteks tanpa mengganggu fokus utama.",
+      boardmemoBody: "Isi dengan catatan singkat, positioning, atau peringatan penting yang ingin tampil dekat hero sebagai lapisan informasi tambahan.",
     },
   },
   "prism-riot": {
     key: "prism-riot",
     specialAdminForm: false,
+    serviceSlotCount: 3,
+    minFilledServiceCount: 3,
+    maxFilledServiceCount: 3,
+    fixedGalleryCount: 4,
+    fixedTestimonialCount: 3,
     defaults: {
       heroLabel: "Prism Riot",
       aboutTitle: "Studio Atlas",
@@ -58,11 +82,19 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
       galleryIntro: "Setiap visual menjadi bagian dari komposisi besar, bukan hanya daftar gambar biasa.",
       contactTitle: "Dock",
       contactIntro: "Bagian akhir dirancang seperti hub aksi: jelas, tajam, dan mudah mengarahkan pengunjung.",
+      boardmemoLabel: "Studio Note",
+      boardmemoTitle: "Memo singkat yang memperkaya narasi visual sejak frame pertama.",
+      boardmemoBody: "Cocok untuk pengantar mini, konteks campaign, atau poin kuratorial yang ingin tetap terasa elegan dan ringkas.",
     },
   },
   "harbor-ledger": {
     key: "harbor-ledger",
     specialAdminForm: false,
+    serviceSlotCount: 3,
+    minFilledServiceCount: 3,
+    maxFilledServiceCount: 3,
+    fixedGalleryCount: 4,
+    fixedTestimonialCount: 3,
     defaults: {
       heroLabel: "Harbor Ledger",
       aboutTitle: "Business Ledger",
@@ -75,13 +107,19 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
       galleryIntro: "Frame visual diletakkan sebagai bagian dari manifest proyek dan pencapaian.",
       contactTitle: "Manifest Contact",
       contactIntro: "Semua kanal kontak ditutup dalam panel yang tenang, formal, dan sangat jelas.",
+      boardmemoLabel: "Ledger Note",
+      boardmemoTitle: "Catatan pendek untuk menambah rasa presisi di area hero.",
+      boardmemoBody: "Masukkan memo singkat, kalimat arahan, atau statement internal yang memperkuat suasana blueprint dan laporan premium.",
     },
   },
   "atelier-mosaic": {
     key: "atelier-mosaic",
     specialAdminForm: true,
+    serviceSlotCount: 4,
+    minFilledServiceCount: 3,
+    maxFilledServiceCount: 4,
     fixedGalleryCount: 4,
-    fixedTestimonialCount: 3,
+    fixedTestimonialCount: 4,
     defaults: {
       heroLabel: "Atelier Mosaic",
       aboutTitle: "About",
@@ -89,11 +127,14 @@ export const templateFormConfig: Record<string, TemplateFormConfig> = {
       servicesTitle: "Services",
       servicesIntro: "Empat layanan utama yang disusun seperti editorial menu agar mudah dibaca.",
       testimonialsTitle: "Testimonials",
-      testimonialsIntro: "Tiga testimoni pilihan untuk membangun rasa percaya dengan ritme yang ringan.",
+      testimonialsIntro: "Empat testimoni pilihan untuk membangun rasa percaya dengan ritme editorial yang lebih utuh.",
       galleryTitle: "Gallery",
       galleryIntro: "Empat frame visual yang menjadi pusat komposisi halaman.",
       contactTitle: "Contact",
       contactIntro: "Ajak pengunjung menghubungi bisnis lewat WhatsApp, telepon, atau alamat aktif.",
+      boardmemoLabel: "Board Memo",
+      boardmemoTitle: "Structured direction for a sharper first impression.",
+      boardmemoBody: "Gunakan boardmemo untuk menaruh ringkasan positioning, arahan presentasi, atau catatan formal yang mendukung panel hero tanpa memakan fokus gambar utama.",
     },
   },
 };
@@ -119,6 +160,9 @@ export function applyTemplateDefaults<T extends Pick<
   | "galleryIntro"
   | "contactTitle"
   | "contactIntro"
+  | "boardmemoLabel"
+  | "boardmemoTitle"
+  | "boardmemoBody"
 >>(value: T, templateKey: string | null | undefined) {
   const config = getTemplateFormConfig(templateKey);
   if (!config) {
@@ -138,5 +182,8 @@ export function applyTemplateDefaults<T extends Pick<
     galleryIntro: value.galleryIntro || config.defaults.galleryIntro || "",
     contactTitle: value.contactTitle || config.defaults.contactTitle || "",
     contactIntro: value.contactIntro || config.defaults.contactIntro || "",
+    boardmemoLabel: value.boardmemoLabel || config.defaults.boardmemoLabel || "",
+    boardmemoTitle: value.boardmemoTitle || config.defaults.boardmemoTitle || "",
+    boardmemoBody: value.boardmemoBody || config.defaults.boardmemoBody || "",
   };
 }

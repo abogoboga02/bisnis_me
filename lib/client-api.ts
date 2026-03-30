@@ -1,10 +1,11 @@
 "use client";
 
-import type { AdminIdentity, Business } from "@/lib/types";
+import type { AdminIdentity, Business, ManagedUser } from "@/lib/types";
 
 const API_BASE_PATH = "/api/business";
 const ADMIN_LOGIN_PATH = "/api/admin/login";
 const ADMIN_LOGOUT_PATH = "/api/admin/logout";
+const ADMIN_USERS_PATH = "/api/admin/users";
 
 async function parseErrorMessage(response: Response, fallbackMessage: string) {
   try {
@@ -125,4 +126,33 @@ export async function uploadAdminImage(file: File) {
   };
 
   return payload.data.path;
+}
+
+type CreateManagedUserPayload = {
+  email: string;
+  name: string;
+  password: string;
+  role: "owner" | "admin";
+  businessId: number | null;
+};
+
+export async function createManagedUser(payload: CreateManagedUserPayload) {
+  let response: Response;
+  try {
+    response = await fetch(ADMIN_USERS_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the user management API");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to create user"));
+  }
+
+  const data = (await response.json()) as { data: ManagedUser };
+  return data.data;
 }

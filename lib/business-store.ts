@@ -1,9 +1,10 @@
 import "server-only";
 
-import type { AdminIdentity, AdminRole, Business, GalleryItem, Service, Template, Testimonial } from "@/lib/types";
-import { verifyPassword } from "@/lib/password";
+import type { AdminIdentity, AdminRole, Business, GalleryItem, ManagedUser, Service, Template, Testimonial } from "@/lib/types";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { applyTemplateDefaults, getTemplateFormConfig } from "@/lib/template-form-config";
+import { isValidIndonesiaInternationalNumber, normalizePhoneNumber } from "@/lib/contact-utils";
 
 type TemplateRow = {
   id: number;
@@ -67,6 +68,9 @@ type BusinessRow = {
   gallery_intro: string | null;
   contact_title: string | null;
   contact_intro: string | null;
+  boardmemo_label: string | null;
+  boardmemo_title: string | null;
+  boardmemo_body: string | null;
   phone: string | null;
   whatsapp: string | null;
   address: string | null;
@@ -84,10 +88,21 @@ type UserRow = {
   password_hash: string;
   name: string;
   role: AdminRole | null;
+  created_at?: string;
+  updated_at?: string;
 };
 
 type BusinessAccessRow = {
+  user_id?: number;
   business_id: number;
+};
+
+type CreateAdminUserPayload = {
+  email?: unknown;
+  name?: unknown;
+  password?: unknown;
+  role?: unknown;
+  businessId?: unknown;
 };
 
 type BusinessPayload = Partial<Business>;
@@ -113,6 +128,9 @@ type NormalizedBusinessPayload = {
   galleryIntro: string;
   contactTitle: string;
   contactIntro: string;
+  boardmemoLabel: string;
+  boardmemoTitle: string;
+  boardmemoBody: string;
   phone: string;
   whatsapp: string;
   address: string;
@@ -146,7 +164,7 @@ type RelatedCollections = {
 const TEMPLATE_SELECT =
   "id, name, key, description, accent, category, category_label, fit, feature, preview_image, created_at, updated_at";
 const BUSINESS_SELECT =
-  "id, slug, name, tagline, description, hero_label, hero_image, hero_cta_label, hero_cta_url, about_title, about_intro, services_title, services_intro, testimonials_title, testimonials_intro, gallery_title, gallery_intro, contact_title, contact_intro, phone, whatsapp, address, meta_title, meta_description, og_image, template_id, created_at, updated_at";
+  "id, slug, name, tagline, description, hero_label, hero_image, hero_cta_label, hero_cta_url, about_title, about_intro, services_title, services_intro, testimonials_title, testimonials_intro, gallery_title, gallery_intro, contact_title, contact_intro, boardmemo_label, boardmemo_title, boardmemo_body, phone, whatsapp, address, meta_title, meta_description, og_image, template_id, created_at, updated_at";
 
 function createHttpError(status: number, message: string) {
   const error = new Error(message) as AppError;
@@ -177,9 +195,58 @@ function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function cleanOptionalUrl(value: unknown) {
+function isSafeAbsoluteUrl(value: string, allowedProtocols: string[]) {
+  try {
+    const url = new URL(value);
+    return allowedProtocols.includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function normalizeMediaUrl(value: unknown) {
   const text = cleanText(value);
-  return text || null;
+  if (!text) {
+    return null;
+  }
+
+  if (text.startsWith("/")) {
+    return text;
+  }
+
+  return isSafeAbsoluteUrl(text, ["http:", "https:"]) ? text : null;
+}
+
+function normalizeActionUrl(value: unknown) {
+  const text = cleanText(value);
+  if (!text) {
+    return "#contact";
+  }
+
+  if (text.startsWith("#") || text.startsWith("/")) {
+    return text;
+  }
+
+  return isSafeAbsoluteUrl(text, ["http:", "https:", "mailto:", "tel:"]) ? text : "#contact";
+}
+
+function normalizeEmail(value: unknown) {
+  return typeof value === "string" ? value.trim().toLowerCase() : "";
+}
+
+function normalizeOptionalBusinessId(value: unknown) {
+  if (typeof value === "number" && Number.isInteger(value) && value > 0) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed > 0) {
+      return parsed;
+    }
+  }
+
+  return null;
 }
 
 function groupRowsByBusinessId<Row extends { business_id: number }>(rows: Row[] | null) {
@@ -243,6 +310,18 @@ function mapTemplateRow(row: TemplateRow): Template {
   };
 }
 
+function mapManagedUserRow(row: UserRow, businessIds: number[]): ManagedUser {
+  return {
+    id: row.id,
+    email: row.email,
+    name: row.name,
+    role: row.role === "owner" ? "owner" : "admin",
+    businessIds,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function mapBusinessRow(
   row: BusinessRow,
   related: RelatedCollections,
@@ -281,6 +360,9 @@ function mapBusinessRow(
     galleryIntro: row.gallery_intro ?? "",
     contactTitle: row.contact_title ?? "Hubungi kami",
     contactIntro: row.contact_intro ?? "",
+    boardmemoLabel: row.boardmemo_label ?? "Board Memo",
+    boardmemoTitle: row.boardmemo_title ?? "Structured direction for a sharper first impression.",
+    boardmemoBody: row.boardmemo_body ?? "",
     phone: row.phone ?? "",
     whatsapp: row.whatsapp ?? "",
     address: row.address ?? "",
@@ -309,9 +391,9 @@ function normalizePayload(payload: BusinessPayload): NormalizedBusinessPayload {
     tagline,
     description,
     heroLabel: cleanText(payload.heroLabel) || "Business website",
-    heroImage: cleanOptionalUrl(payload.heroImage),
+    heroImage: normalizeMediaUrl(payload.heroImage),
     heroCtaLabel: cleanText(payload.heroCtaLabel) || "Contact Us",
-    heroCtaUrl: cleanText(payload.heroCtaUrl) || "#contact",
+    heroCtaUrl: normalizeActionUrl(payload.heroCtaUrl),
     aboutTitle: cleanText(payload.aboutTitle) || "Tentang bisnis",
     aboutIntro: cleanText(payload.aboutIntro) || description,
     servicesTitle: cleanText(payload.servicesTitle) || "Layanan utama",
@@ -322,12 +404,15 @@ function normalizePayload(payload: BusinessPayload): NormalizedBusinessPayload {
     galleryIntro: cleanText(payload.galleryIntro),
     contactTitle: cleanText(payload.contactTitle) || "Hubungi kami",
     contactIntro: cleanText(payload.contactIntro),
-    phone: cleanText(payload.phone),
-    whatsapp: cleanText(payload.whatsapp),
+    boardmemoLabel: cleanText(payload.boardmemoLabel) || "Board Memo",
+    boardmemoTitle: cleanText(payload.boardmemoTitle) || "Structured direction for a sharper first impression.",
+    boardmemoBody: cleanText(payload.boardmemoBody),
+    phone: normalizePhoneNumber(cleanText(payload.phone)),
+    whatsapp: normalizePhoneNumber(cleanText(payload.whatsapp)),
     address: cleanText(payload.address),
     metaTitle: cleanText(payload.metaTitle) || name,
     metaDescription: cleanText(payload.metaDescription) || description,
-    ogImage: cleanOptionalUrl(payload.ogImage),
+    ogImage: normalizeMediaUrl(payload.ogImage),
     templateId: typeof payload.templateId === "number" ? payload.templateId : null,
     services: Array.isArray(payload.services)
       ? payload.services
@@ -352,7 +437,7 @@ function normalizePayload(payload: BusinessPayload): NormalizedBusinessPayload {
           .map((item) => ({
             title: cleanText(item.title),
             caption: cleanText(item.caption),
-            imageUrl: cleanOptionalUrl(item.imageUrl),
+            imageUrl: normalizeMediaUrl(item.imageUrl),
           }))
           .filter((item) => item.title || item.caption || item.imageUrl)
       : [],
@@ -382,8 +467,30 @@ function validateBusinessPayload(payload: NormalizedBusinessPayload, templateKey
     throw createHttpError(400, "Nomor telepon dan WhatsApp wajib diisi.");
   }
 
+  if (!isValidIndonesiaInternationalNumber(payload.phone) || !isValidIndonesiaInternationalNumber(payload.whatsapp)) {
+    throw createHttpError(400, "Nomor telepon dan WhatsApp wajib diawali 62.");
+  }
+
+  if (!payload.address || !payload.heroImage || !payload.heroCtaLabel) {
+    throw createHttpError(400, "Alamat, tombol utama, dan gambar utama wajib diisi.");
+  }
+
+  if (!payload.aboutIntro || !payload.servicesIntro || !payload.testimonialsIntro || !payload.galleryIntro || !payload.contactIntro) {
+    throw createHttpError(400, "Seluruh isi section wajib diisi.");
+  }
+
   if (!Array.isArray(payload.services) || payload.services.length === 0) {
     throw createHttpError(400, "Minimal harus ada satu layanan.");
+  }
+
+  const templateConfig = getTemplateFormConfig(templateKey);
+
+  if (templateConfig?.minFilledServiceCount && payload.services.length < templateConfig.minFilledServiceCount) {
+    throw createHttpError(400, `Template ini wajib memiliki minimal ${templateConfig.minFilledServiceCount} layanan.`);
+  }
+
+  if (templateConfig?.maxFilledServiceCount && payload.services.length > templateConfig.maxFilledServiceCount) {
+    throw createHttpError(400, `Template ini hanya mendukung maksimal ${templateConfig.maxFilledServiceCount} layanan.`);
   }
 
   for (const service of payload.services) {
@@ -397,18 +504,16 @@ function validateBusinessPayload(payload: NormalizedBusinessPayload, templateKey
   }
 
   for (const testimonial of payload.testimonials) {
-    if (!testimonial.name || !testimonial.quote) {
-      throw createHttpError(400, "Setiap testimoni wajib punya nama dan kutipan.");
+    if (!testimonial.name || !testimonial.role || !testimonial.quote) {
+      throw createHttpError(400, "Setiap testimoni wajib punya nama, jabatan, dan kutipan.");
     }
   }
 
   for (const item of payload.galleryItems) {
-    if (!item.title || !item.imageUrl) {
-      throw createHttpError(400, "Setiap item galeri wajib punya judul dan gambar.");
+    if (!item.title || !item.caption || !item.imageUrl) {
+      throw createHttpError(400, "Setiap item galeri wajib punya judul, keterangan, dan gambar.");
     }
   }
-
-  const templateConfig = getTemplateFormConfig(templateKey);
 
   if (templateConfig?.fixedTestimonialCount && payload.testimonials.length !== templateConfig.fixedTestimonialCount) {
     throw createHttpError(400, `Template ini wajib memiliki ${templateConfig.fixedTestimonialCount} testimoni.`);
@@ -451,6 +556,80 @@ async function getAccessibleBusinessIds(admin?: AdminIdentity) {
   }
 
   return ((data as BusinessAccessRow[] | null) ?? []).map((item) => item.business_id);
+}
+
+async function requireOwner(admin: AdminIdentity) {
+  if (admin.role !== "owner") {
+    throw createHttpError(403, "Hanya owner yang bisa mengelola user.");
+  }
+}
+
+async function listAllUserAccessRows() {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("user_business_access")
+    .select("user_id, business_id")
+    .order("user_id", { ascending: true })
+    .order("business_id", { ascending: true });
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  return (data as Array<{ user_id: number; business_id: number }> | null) ?? [];
+}
+
+function groupBusinessIdsByUserId(rows: Array<{ user_id: number; business_id: number }>) {
+  const grouped = new Map<number, number[]>();
+
+  for (const row of rows) {
+    const current = grouped.get(row.user_id) ?? [];
+    current.push(row.business_id);
+    grouped.set(row.user_id, current);
+  }
+
+  return grouped;
+}
+
+function validateCreateAdminUserPayload(payload: {
+  email: string;
+  name: string;
+  password: string;
+  role: AdminRole;
+  businessId: number | null;
+}) {
+  if (!payload.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+    throw createHttpError(400, "Email user wajib valid.");
+  }
+
+  if (!payload.name) {
+    throw createHttpError(400, "Nama user wajib diisi.");
+  }
+
+  if (!payload.password || payload.password.length < 8) {
+    throw createHttpError(400, "Password minimal 8 karakter.");
+  }
+
+  if (payload.role !== "owner" && payload.role !== "admin") {
+    throw createHttpError(400, "Role user hanya boleh owner atau admin.");
+  }
+
+  if (payload.role === "owner" && payload.businessId) {
+    throw createHttpError(400, "Owner tidak perlu dihubungkan ke bisnis tertentu.");
+  }
+}
+
+async function assertBusinessExists(businessId: number) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("businesses").select("id").eq("id", businessId).maybeSingle();
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  if (!data) {
+    throw createHttpError(404, "Bisnis yang dipilih tidak ditemukan.");
+  }
 }
 
 async function ensureBusinessAccess(admin: AdminIdentity | undefined, businessId: number) {
@@ -651,7 +830,8 @@ export async function listTemplatesFromDatabase(admin?: AdminIdentity) {
 
   const accessibleBusinessIds = await getAccessibleBusinessIds(admin);
   if (!accessibleBusinessIds || accessibleBusinessIds.length === 0) {
-    return [];
+    const rows = await fetchTemplateRows();
+    return rows.map(mapTemplateRow);
   }
 
   const supabase = getSupabaseAdmin();
@@ -721,7 +901,7 @@ export async function getBusinessBySlugFromDatabase(slug: string) {
 }
 
 export async function authenticateAdmin(email: unknown, password: unknown): Promise<AdminIdentity> {
-  const normalizedEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+  const normalizedEmail = normalizeEmail(email);
   const normalizedPassword = typeof password === "string" ? password : "";
 
   if (!normalizedEmail || !normalizedPassword) {
@@ -756,9 +936,86 @@ export async function authenticateAdmin(email: unknown, password: unknown): Prom
   };
 }
 
+export async function listManagedUsersFromDatabase(admin: AdminIdentity): Promise<ManagedUser[]> {
+  await requireOwner(admin);
+
+  const supabase = getSupabaseAdmin();
+  const [{ data: usersData, error: usersError }, accessRows] = await Promise.all([
+    supabase
+      .from("users")
+      .select("id, email, password_hash, name, role, created_at, updated_at")
+      .order("id", { ascending: true }),
+    listAllUserAccessRows(),
+  ]);
+
+  if (usersError) {
+    throwSupabaseError(500, usersError.message);
+  }
+
+  const businessIdsByUserId = groupBusinessIdsByUserId(accessRows);
+  return ((usersData as UserRow[] | null) ?? []).map((row) => mapManagedUserRow(row, businessIdsByUserId.get(row.id) ?? []));
+}
+
+export async function createManagedUserRecord(payload: CreateAdminUserPayload, admin: AdminIdentity): Promise<ManagedUser> {
+  await requireOwner(admin);
+
+  const normalized = {
+    email: normalizeEmail(payload.email),
+    name: cleanText(payload.name),
+    password: typeof payload.password === "string" ? payload.password : "",
+    role: payload.role === "owner" ? "owner" : "admin",
+    businessId: normalizeOptionalBusinessId(payload.businessId),
+  } as const;
+
+  validateCreateAdminUserPayload(normalized);
+
+  if (normalized.role === "admin" && normalized.businessId) {
+    await assertBusinessExists(normalized.businessId);
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("users")
+    .insert({
+      email: normalized.email,
+      password_hash: hashPassword(normalized.password),
+      name: normalized.name,
+      role: normalized.role,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .select("id, email, password_hash, name, role, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    if (error?.code === "23505") {
+      throw createHttpError(409, "Email user sudah terdaftar.");
+    }
+
+    throw createHttpError(500, normalizeSupabaseErrorMessage(error?.message ?? "Gagal membuat user."));
+  }
+
+  if (normalized.role === "admin" && normalized.businessId) {
+    const accessResult = await supabase.from("user_business_access").insert({
+      user_id: data.id,
+      business_id: normalized.businessId,
+    });
+
+    if (accessResult.error) {
+      await supabase.from("users").delete().eq("id", data.id);
+      throw createHttpError(500, normalizeSupabaseErrorMessage(accessResult.error.message));
+    }
+  }
+
+  return mapManagedUserRow(data as UserRow, normalized.role === "admin" && normalized.businessId ? [normalized.businessId] : []);
+}
+
 export async function createBusinessRecord(payload: BusinessPayload, admin: AdminIdentity) {
   if (admin.role !== "owner") {
-    throw createHttpError(403, "Hanya owner yang bisa membuat bisnis baru.");
+    const accessibleBusinessIds = await getAccessibleBusinessIds(admin);
+    if (accessibleBusinessIds && accessibleBusinessIds.length > 0) {
+      throw createHttpError(403, "Akun admin hanya boleh memiliki satu website.");
+    }
   }
 
   const baseNormalized = normalizePayload(payload);
@@ -789,6 +1046,9 @@ export async function createBusinessRecord(payload: BusinessPayload, admin: Admi
       gallery_intro: normalized.galleryIntro,
       contact_title: normalized.contactTitle,
       contact_intro: normalized.contactIntro,
+      boardmemo_label: normalized.boardmemoLabel,
+      boardmemo_title: normalized.boardmemoTitle,
+      boardmemo_body: normalized.boardmemoBody,
       phone: normalized.phone,
       whatsapp: normalized.whatsapp,
       address: normalized.address,
@@ -809,6 +1069,17 @@ export async function createBusinessRecord(payload: BusinessPayload, admin: Admi
 
   try {
     await replaceBusinessRelations(data.id, normalized);
+
+    if (admin.role !== "owner") {
+      const accessResult = await supabase.from("user_business_access").insert({
+        user_id: admin.id,
+        business_id: data.id,
+      });
+
+      if (accessResult.error) {
+        throw createHttpError(500, normalizeSupabaseErrorMessage(accessResult.error.message));
+      }
+    }
   } catch (relationError) {
     await supabase.from("businesses").delete().eq("id", data.id);
     throw relationError;
@@ -853,6 +1124,9 @@ export async function updateBusinessRecord(id: number, payload: BusinessPayload,
       gallery_intro: normalized.galleryIntro,
       contact_title: normalized.contactTitle,
       contact_intro: normalized.contactIntro,
+      boardmemo_label: normalized.boardmemoLabel,
+      boardmemo_title: normalized.boardmemoTitle,
+      boardmemo_body: normalized.boardmemoBody,
       phone: normalized.phone,
       whatsapp: normalized.whatsapp,
       address: normalized.address,

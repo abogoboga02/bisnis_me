@@ -5,6 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Database, LockKeyhole } from "lucide-react";
 import { loginAdmin } from "@/lib/client-api";
 
+function getSafeRedirectPath(value: string | null) {
+  if (!value) {
+    return "/admin/dashboard";
+  }
+
+  return value.startsWith("/") && !value.startsWith("//") ? value : "/admin/dashboard";
+}
+
 export function AdminLoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,7 +28,7 @@ export function AdminLoginForm() {
 
     try {
       await loginAdmin(email, password);
-      router.push(searchParams.get("redirect") || "/admin/dashboard");
+      router.push(getSafeRedirectPath(searchParams.get("redirect")));
     } catch (submissionError) {
       setError(submissionError instanceof Error ? submissionError.message : "Login admin gagal.");
     } finally {

@@ -1,22 +1,30 @@
-import { NextResponse } from "next/server";
 import { setAdminSessionCookie } from "@/lib/admin-session";
 import { authenticateAdmin } from "@/lib/business-store";
-
-type AppError = Error & { status?: number };
+import {
+  assertJsonRequest,
+  assertRateLimit,
+  assertSameOrigin,
+  handleRouteError,
+  jsonResponse,
+} from "@/lib/route-security";
 
 export async function POST(request: Request) {
   try {
+    assertSameOrigin(request);
+    assertJsonRequest(request);
+    assertRateLimit(request, {
+      namespace: "admin-login",
+      max: 5,
+      windowMs: 10 * 60 * 1000,
+    });
+
     const body = (await request.json()) as { email?: string; password?: string };
     const admin = await authenticateAdmin(body.email, body.password);
 
-    const nextResponse = NextResponse.json({ data: { admin } });
+    const nextResponse = jsonResponse({ data: { admin } }, { noStore: true });
     setAdminSessionCookie(nextResponse, admin);
     return nextResponse;
   } catch (error) {
-    const appError = error as AppError;
-    return NextResponse.json(
-      { error: appError.message || "Login admin gagal." },
-      { status: appError.status ?? 500 },
-    );
+    return handleRouteError(error, "Login admin gagal.");
   }
 }

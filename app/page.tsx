@@ -1,43 +1,35 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ArrowUpRight, CheckCircle2, LayoutTemplate, MonitorSmartphone, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUpRight, CheckCircle2, LayoutTemplate, Sparkles } from "lucide-react";
 import { MarketingNav } from "@/components/marketing-nav";
 import {
   finalCta,
   heroBenefits,
   howItWorks,
 } from "@/lib/marketing-content";
-import type { Business, Template } from "@/lib/types";
+import type { Template } from "@/lib/types";
 
 export default function HomePage() {
-  const [businesses, setBusinesses] = useState<Business[]>([]);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const [businessesResponse, templatesResponse] = await Promise.all([
-          fetch("/api/public/businesses", { cache: "no-store" }),
-          fetch("/api/public/templates", { cache: "no-store" }),
-        ]);
+        const templatesResponse = await fetch("/api/public/templates", { cache: "no-store" });
 
-        if (!businessesResponse.ok || !templatesResponse.ok) {
+        if (!templatesResponse.ok) {
           throw new Error("Failed to fetch live data.");
         }
 
-        const businessesPayload = (await businessesResponse.json()) as { data?: Business[] };
         const templatesPayload = (await templatesResponse.json()) as { data?: Template[] };
 
-        setBusinesses(businessesPayload.data ?? []);
         setTemplates(templatesPayload.data ?? []);
       } catch (error) {
         console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
       }
     }
 
@@ -63,7 +55,7 @@ export default function HomePage() {
 
         <MarketingNav />
 
-        <div className="relative z-10 mt-10 grid gap-10 lg:grid-cols-[1.618fr_1fr] lg:items-center lg:gap-12">
+        <div className="relative z-10 mt-10 grid gap-10 lg:grid-cols-[1.618fr_1fr] lg:items-start lg:gap-12">
           <div className="max-w-3xl space-y-8 lg:space-y-10">
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
@@ -120,8 +112,51 @@ export default function HomePage() {
               </motion.div>
             </motion.div>
 
+          </div>
+
+          <motion.div
+            className="relative mx-auto w-full max-w-[420px] self-start lg:mx-0 lg:max-w-none"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.4 }}
+          >
+            <motion.div
+              className="glass-panel relative min-h-[30rem] overflow-hidden rounded-[2rem] border border-[#e3ef26]/14 bg-[radial-gradient(circle_at_top,rgba(39,119,99,0.3),transparent_34%),linear-gradient(180deg,rgba(8,39,33,0.84),rgba(6,35,29,0.96))] p-4 sm:min-h-[33rem] sm:p-5 md:p-6"
+              whileHover={{ boxShadow: "0 32px 70px rgba(2, 15, 12, 0.28)" }}
+            >
+              <div className="absolute inset-x-3 bottom-0 top-8 sm:inset-x-4 sm:top-5 scale-110">
+                <Image
+                  src="/uploads/businesses/1774614258065-3d3dddc4-83d6-47d8-a6de-b6417f64bc191.png"
+                  alt="Contoh visual hero website bisnis"
+                  fill
+                  priority
+                  className="object-contain object-top"
+                />
+              </div>
+              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,22,18,0.06),rgba(3,22,18,0.02)_28%,rgba(3,22,18,0.14)_48%,rgba(3,22,18,0.76))]" />
+                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+                  No Coding
+                </span>
+                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+                  Mobile Friendly
+                </span>
+                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+                  SEO Optimized
+                </span>
+              <div className="absolute inset-x-4 bottom-4 z-10 rounded-[1.45rem] border border-[#fffdee]/10 bg-[#06231d]/58 p-4 text-left backdrop-blur-xl sm:inset-x-5 sm:bottom-5">
+                <p className="premium-kicker text-[11px] text-[#e3ef26]">Hero Visual</p>
+                <h2 className="mt-3 text-balance text-[21px] font-semibold leading-[1.02] text-[#fffdee] sm:text-[25px] md:text-[29px]">
+                  Tampilan yang langsung terasa hidup
+                </h2>
+                <p className="mt-3 text-sm leading-7 text-[#fffdee]/72">
+                  Visual promosi yang lebih menarik, ringan, dan tetap rapi untuk membantu bisnis tampil lebih meyakinkan.
+                </p>
+              </div>
+
+            </motion.div>
+
             <motion.ul
-              className="grid gap-4 text-sm leading-7 text-[#fffdee]/82"
+              className="mt-4 grid gap-3 text-sm leading-7 text-[#fffdee]/82"
               initial="hidden"
               animate="visible"
               variants={{
@@ -129,8 +164,8 @@ export default function HomePage() {
                 visible: {
                   opacity: 1,
                   transition: {
-                    staggerChildren: 0.1,
-                    delayChildren: 0.6,
+                    staggerChildren: 0.08,
+                    delayChildren: 0.7,
                   },
                 },
               }}
@@ -138,146 +173,20 @@ export default function HomePage() {
               {heroBenefits.map((benefit) => (
                 <motion.li
                   key={benefit}
-                  className="premium-card flex items-start gap-3 rounded-[24px] px-5 py-4"
+                  className="flex items-start gap-3 rounded-[1.35rem] border border-[#fffdee]/8 bg-[linear-gradient(135deg,rgba(255,253,238,0.06),rgba(255,253,238,0.02))] px-4 py-3.5"
                   variants={{
-                    hidden: { opacity: 0, x: -20 },
-                    visible: { opacity: 1, x: 0, transition: { duration: 0.4 } },
+                    hidden: { opacity: 0, y: 14 },
+                    visible: { opacity: 1, y: 0, transition: { duration: 0.38 } },
                   }}
-                  whileHover={{ x: 6 }}
+                  whileHover={{ y: -3 }}
                 >
-                  <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-[#e3ef26]" />
-                  <span>{benefit}</span>
+                  <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e3ef26]/10 text-[#e3ef26]">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </div>
+                  <span className="text-sm leading-6 text-[#fffdee]/78">{benefit}</span>
                 </motion.li>
               ))}
             </motion.ul>
-          </div>
-
-          <motion.div
-            className="relative"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.4 }}
-          >
-            <div
-              className="premium-pill premium-kicker absolute -right-3 top-8 rounded-[14px] px-4 py-2 text-[11px] font-semibold text-[#fffdee] shadow-[0_18px_48px_rgba(2,15,12,0.34)]"
-            >
-              Free Trial
-            </div>
-
-            <motion.div
-              className="glass-panel relative overflow-hidden border border-[#e3ef26]/14 p-5"
-              style={{ borderRadius: "2.5rem" }}
-              whileHover={{ boxShadow: "0 32px 70px rgba(2, 15, 12, 0.28)" }}
-            >
-              <div
-                className="premium-pill absolute right-5 top-5 rounded-[14px] px-3 py-1 text-xs font-medium text-[#fffdee]/84"
-              >
-                No Coding
-              </div>
-
-              <motion.div
-                className="rounded-[1.75rem] border border-[#fffdee]/8 bg-[#06231d]/40 p-5"
-                style={{ borderRadius: "1.75rem" }}
-                whileHover={{ backgroundColor: "rgba(6,35,29,0.55)" }}
-              >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="premium-kicker text-[11px] text-[#fffdee]/54">Preview Hero</p>
-                    <h2 className="mt-3 text-[26px] font-semibold text-[#fffdee]">Template website bisnis</h2>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="h-3 w-3 bg-rose-400/80" style={{ borderRadius: "50%" }} />
-                    <span className="h-3 w-3 bg-amber-300/80" style={{ borderRadius: "50%" }} />
-                    <span className="h-3 w-3 bg-emerald-300/80" style={{ borderRadius: "50%" }} />
-                  </div>
-                </div>
-
-                <div className="mt-6 grid gap-4">
-                  <motion.div
-                    className="overflow-hidden rounded-[2rem] border border-[#e3ef26]/16 bg-[linear-gradient(135deg,rgba(226,251,206,0.2),rgba(227,239,38,0.18),rgba(7,102,83,0.28),rgba(6,35,29,0.76))] p-5"
-                    whileHover={{ scale: 1.02 }}
-                  >
-                    <div className="premium-kicker flex items-center justify-between gap-3 text-[11px] text-[#fffdee]/72">
-                      <span>Homepage</span>
-                      <span>Mobile Friendly</span>
-                    </div>
-                    <div className="mt-6 max-w-sm space-y-4">
-                      <p className="premium-kicker text-[11px] text-[#fffdee]/68">Travel | Jasa | UMKM</p>
-                      <h3 className="text-[42px] font-semibold leading-[1.02] text-[#fffdee]">
-                        Website yang membuat bisnis terlihat lebih dipercaya
-                      </h3>
-                      <p className="text-sm leading-7 text-[#fffdee]/74">
-                        Pilih template, isi informasi bisnis, lalu publikasikan website profesional
-                        dengan lebih cepat.
-                      </p>
-                      <div className="flex flex-wrap gap-3">
-                        <motion.span
-                          className="premium-pill rounded-[14px] px-4 py-2 text-sm font-medium text-[#fffdee]"
-                          whileHover={{ backgroundColor: "rgba(255,253,238,0.16)" }}
-                        >
-                          CTA jelas
-                        </motion.span>
-                        <motion.span
-                          className="premium-pill rounded-[14px] px-4 py-2 text-sm font-medium text-[#fffdee]"
-                          whileHover={{ backgroundColor: "rgba(255,253,238,0.16)" }}
-                        >
-                          Responsive
-                        </motion.span>
-                      </div>
-                    </div>
-                  </motion.div>
-
-                  <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr]">
-                    <motion.div
-                      className="premium-card rounded-[2rem] p-4"
-                      whileHover={{ backgroundColor: "rgba(255,253,238,0.05)" }}
-                    >
-                      <p className="text-sm text-[#fffdee]/54">Template aktif</p>
-                      <p className="mt-2 text-[42px] font-semibold leading-none text-[#fffdee]">{templates.length}</p>
-                      <p className="mt-3 text-sm leading-6 text-[#fffdee]/68">
-                        {isLoading
-                          ? "Memuat data template dan website aktif dari database..."
-                          : `${businesses.length} website aktif sudah tersimpan di database.`}
-                      </p>
-                    </motion.div>
-
-                    <motion.div
-                      className="premium-card rounded-[1.75rem] p-4"
-                      whileHover={{ backgroundColor: "rgba(255,253,238,0.05)" }}
-                    >
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-sm text-[#fffdee]/54">Visual direction</p>
-                          <p className="mt-2 text-lg font-semibold text-[#fffdee]">Mockup desktop + mobile</p>
-                        </div>
-                        <MonitorSmartphone className="h-6 w-6 text-[#e3ef26]" />
-                      </div>
-                      <div className="mt-4 grid grid-cols-[1.3fr_0.7fr] gap-3">
-                        <div
-                          className="rounded-[1.5rem] border border-[#fffdee]/8 bg-[#06231d]/48 p-3"
-                          style={{ borderRadius: "1.5rem" }}
-                        >
-                          <div className="h-2 w-20 bg-[linear-gradient(135deg,#fffdee,#e3ef26)]" style={{ borderRadius: "1rem" }} />
-                          <div className="mt-3 h-24 bg-[linear-gradient(135deg,rgba(226,251,206,0.34),rgba(227,239,38,0.18),rgba(7,102,83,0.22))]" style={{ borderRadius: "1.5rem" }} />
-                          <div className="mt-3 grid grid-cols-3 gap-2">
-                            <div className="h-8 bg-[#fffdee]/10" style={{ borderRadius: "0.75rem" }} />
-                            <div className="h-8 bg-[#fffdee]/10" style={{ borderRadius: "0.75rem" }} />
-                            <div className="h-8 bg-[#fffdee]/10" style={{ borderRadius: "0.75rem" }} />
-                          </div>
-                        </div>
-                        <div
-                          className="rounded-[1.5rem] border border-[#fffdee]/8 bg-[#06231d]/48 p-3"
-                          style={{ borderRadius: "1.5rem" }}
-                        >
-                          <div className="mx-auto h-2 w-10 bg-[#fffdee]/14" style={{ borderRadius: "1rem" }} />
-                          <div className="mt-3 h-32 bg-[linear-gradient(180deg,rgba(227,239,38,0.26),rgba(7,102,83,0.18),rgba(6,35,29,0.08))]" style={{ borderRadius: "1.2rem" }} />
-                        </div>
-                      </div>
-                    </motion.div>
-                  </div>
-                </div>
-              </motion.div>
-            </motion.div>
           </motion.div>
         </div>
       </section>

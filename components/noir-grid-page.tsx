@@ -15,9 +15,27 @@ function getServices(business: Business): Service[] {
   }
 
   return [
-    { id: 1, businessId: 0, name: "Signal Design", description: business.description, icon: "layout-template" },
-    { id: 2, businessId: 0, name: "Response Flow", description: business.description, icon: "phone-call" },
-    { id: 3, businessId: 0, name: "Proof Layer", description: business.description, icon: "shield" },
+    {
+      id: 1,
+      businessId: 0,
+      name: `${business.servicesTitle || business.templateName || "Service"} 01`,
+      description: business.servicesIntro || business.description,
+      icon: "layout-template",
+    },
+    {
+      id: 2,
+      businessId: 0,
+      name: `${business.servicesTitle || business.templateName || "Service"} 02`,
+      description: business.aboutIntro || business.description,
+      icon: "phone-call",
+    },
+    {
+      id: 3,
+      businessId: 0,
+      name: `${business.servicesTitle || business.templateName || "Service"} 03`,
+      description: business.contactIntro || business.description,
+      icon: "shield",
+    },
   ];
 }
 
@@ -27,14 +45,29 @@ function getTestimonials(business: Business): Testimonial[] {
   }
 
   return [
-    { id: 1, businessId: 0, name: "Lead Operator", role: "Commercial Team", quote: business.tagline, sortOrder: 0 },
+    {
+      id: 1,
+      businessId: 0,
+      name: business.name,
+      role: business.aboutTitle || business.templateName || "Business",
+      quote: business.tagline || business.description,
+      sortOrder: 0,
+    },
     {
       id: 2,
       businessId: 0,
-      name: "Brand Desk",
-      role: "Operations",
-      quote: "Layout terasa seperti command center, sangat cocok untuk brand yang ingin tampil tegas.",
+      name: business.templateName || business.name,
+      role: business.servicesTitle || business.contactTitle || "Team",
+      quote: business.testimonialsIntro || business.description,
       sortOrder: 1,
+    },
+    {
+      id: 3,
+      businessId: 0,
+      name: business.heroLabel || business.name,
+      role: business.galleryTitle || business.contactTitle || "Support",
+      quote: business.galleryIntro || business.description,
+      sortOrder: 2,
     },
   ];
 }
@@ -45,9 +78,10 @@ function getGallery(business: Business): GalleryItem[] {
   }
 
   return [
-    { id: 1, businessId: 0, title: "Visual Node", caption: "Tambahkan frame hasil kerja atau dokumentasi brand.", imageUrl: "", sortOrder: 0 },
-    { id: 2, businessId: 0, title: "Proof Layer", caption: "Blok visual ini menjaga halaman tetap terasa dinamis.", imageUrl: "", sortOrder: 1 },
-    { id: 3, businessId: 0, title: "Output", caption: "Masukkan visual terkuat untuk mempertegas positioning.", imageUrl: "", sortOrder: 2 },
+    { id: 1, businessId: 0, title: `${business.galleryTitle || business.templateName || "Gallery"} 01`, caption: business.galleryIntro || business.description, imageUrl: "", sortOrder: 0 },
+    { id: 2, businessId: 0, title: `${business.galleryTitle || business.templateName || "Gallery"} 02`, caption: business.servicesIntro || business.description, imageUrl: "", sortOrder: 1 },
+    { id: 3, businessId: 0, title: `${business.galleryTitle || business.templateName || "Gallery"} 03`, caption: business.testimonialsIntro || business.description, imageUrl: "", sortOrder: 2 },
+    { id: 4, businessId: 0, title: `${business.galleryTitle || business.templateName || "Gallery"} 04`, caption: business.contactIntro || business.description, imageUrl: "", sortOrder: 3 },
   ];
 }
 
@@ -61,6 +95,34 @@ export function NoirGridPage({
   const services = getServices(business);
   const testimonials = getTestimonials(business);
   const galleryItems = getGallery(business);
+  const heroEyebrow = business.heroLabel || business.templateName || "Noir Grid";
+  const aboutHeading = business.boardmemoTitle || business.aboutTitle || "Narrative framed like a live operating protocol.";
+  const servicesHeading = business.servicesTitle || "Service modules stacked like active channels.";
+  const proofHeading = business.testimonialsTitle || "Proof shown as a mixed signal feed.";
+  const contactHeading = business.contactTitle || "Final command block.";
+  const signalLabel = business.testimonialsTitle || business.heroLabel || "Signal";
+  const safePhone = business.phone || "Phone belum tersedia";
+  const safeWhatsapp = business.whatsapp || "WhatsApp belum tersedia";
+  const safeAddress = business.address || "Alamat belum tersedia";
+  const aboutCards = [
+    {
+      label: business.servicesTitle || "01",
+      copy: business.servicesIntro || "Headline besar menjaga first impression tetap tegas.",
+    },
+    {
+      label: business.testimonialsTitle || "02",
+      copy: business.testimonialsIntro || "Grid ketat dan warna neon dipakai secukupnya agar tidak terasa berisik.",
+    },
+    {
+      label: business.galleryTitle || "03",
+      copy: business.galleryIntro || "Cocok untuk bisnis yang ingin tampil modern, tajam, dan punya rasa kontrol.",
+    },
+  ];
+  const terminalStats = [
+    { label: business.aboutTitle || "SYSTEM", value: heroEyebrow },
+    { label: business.servicesTitle || "MODULES", value: String(services.length).padStart(2, "0") },
+    { label: business.testimonialsTitle || "PROOF", value: String(testimonials.length).padStart(2, "0") },
+  ];
 
   return (
     <main className="overflow-hidden bg-[#050505] font-tech text-[#f4f4f1]">
@@ -97,7 +159,7 @@ export function NoirGridPage({
                 className="space-y-6"
               >
                 <p className="font-mono-alt text-xs uppercase tracking-[0.32em] text-white/42">
-                  Dark signal system for brands that want authority, precision, and edge.
+                  {heroEyebrow}
                 </p>
                 <h1 className="max-w-4xl font-graphic text-[clamp(3rem,8vw,7rem)] uppercase leading-[0.9] tracking-[-0.05em] text-white">
                   {business.name}
@@ -116,7 +178,7 @@ export function NoirGridPage({
                   <ArrowUpRight className="h-4 w-4" />
                 </a>
                 <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-white/14 bg-white/6 px-6 py-3 font-semibold text-white transition hover:-translate-y-1">
-                  Direct WhatsApp
+                  {business.whatsapp ? "WhatsApp" : "Kontak"}
                   <MessageCircle className="h-4 w-4" />
                 </a>
               </motion.div>
@@ -129,11 +191,7 @@ export function NoirGridPage({
               className="grid gap-4"
             >
               <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1">
-                {[
-                  { label: "SYSTEM", value: "ONLINE" },
-                  { label: "MODULES", value: String(services.length).padStart(2, "0") },
-                  { label: "PROOF", value: String(testimonials.length).padStart(2, "0") },
-                ].map((item) => (
+                {terminalStats.map((item) => (
                   <div key={item.label} className="border border-white/10 bg-white/4 p-5">
                     <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-white/44">{item.label}</p>
                     <p className="mt-4 font-graphic text-3xl uppercase tracking-[-0.04em] text-[#d4ff47]">{item.value}</p>
@@ -149,7 +207,7 @@ export function NoirGridPage({
                 )}
                 <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(5,5,5,0.1),rgba(5,5,5,0.34),rgba(5,5,5,0.78))]" />
                 <div className="absolute left-0 top-0 border-r border-b border-[#d4ff47]/24 bg-[#d4ff47]/8 px-4 py-3 font-mono-alt text-[11px] uppercase tracking-[0.28em] text-[#d4ff47]">
-                  Primary View
+                  {business.galleryTitle || heroEyebrow}
                 </div>
               </div>
             </motion.div>
@@ -162,21 +220,17 @@ export function NoirGridPage({
           <div className="border border-[#d4ff47]/20 bg-[#0a0a0a] p-8">
             <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#d4ff47]">{business.aboutTitle}</p>
             <h2 className="mt-5 font-graphic text-4xl uppercase leading-[0.92] tracking-[-0.04em] text-white">
-              Narrative framed like a live operating protocol.
+              {aboutHeading}
             </h2>
             <p className="mt-5 text-base leading-8 text-white/72">{business.aboutIntro || business.description}</p>
           </div>
           <div className="grid gap-4 md:grid-cols-3">
-            {[
-              "Headline besar menjaga first impression tetap tegas.",
-              "Grid ketat dan warna neon dipakai secukupnya agar tidak terasa berisik.",
-              "Cocok untuk bisnis yang ingin tampil modern, tajam, dan punya rasa kontrol.",
-            ].map((copy, index) => (
-              <div key={copy} className="border border-white/10 bg-white/4 p-6">
+            {aboutCards.map((item, index) => (
+              <div key={`${item.label}-${index}`} className="border border-white/10 bg-white/4 p-6">
                 <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-white/44">
-                  0{index + 1}
+                  {item.label}
                 </p>
-                <p className="mt-4 text-sm leading-7 text-white/74">{copy}</p>
+                <p className="mt-4 text-sm leading-7 text-white/74">{item.copy}</p>
               </div>
             ))}
           </div>
@@ -188,7 +242,7 @@ export function NoirGridPage({
           <div>
             <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#d4ff47]">{business.servicesTitle}</p>
             <h2 className="mt-4 font-graphic text-4xl uppercase leading-[0.94] tracking-[-0.04em] text-white">
-              Service modules stacked like active channels.
+              {servicesHeading}
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-white/64">{business.servicesIntro}</p>
@@ -227,7 +281,7 @@ export function NoirGridPage({
           <div>
             <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#d4ff47]">{business.testimonialsTitle}</p>
             <h2 className="mt-4 font-graphic text-4xl uppercase leading-[0.94] tracking-[-0.04em] text-white">
-              Proof shown as a mixed signal feed.
+              {proofHeading}
             </h2>
           </div>
           <p className="max-w-xl text-sm leading-7 text-white/64">{business.testimonialsIntro}</p>
@@ -238,7 +292,7 @@ export function NoirGridPage({
             {testimonials.slice(0, 3).map((item, index) => (
               <div key={`${item.id}-${index}`} className={`border p-6 ${index === 1 ? "border-[#d4ff47]/22 bg-[#d4ff47]/10 text-[#f4f4f1]" : "border-white/10 bg-white/4 text-white"}`}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-white/44">Signal</p>
+                  <p className="font-mono-alt text-[11px] uppercase tracking-[0.28em] text-white/44">{signalLabel}</p>
                   <Quote className="h-4 w-4 text-[#d4ff47]" />
                 </div>
                 <p className="mt-4 text-base leading-8">{item.quote}</p>
@@ -272,7 +326,7 @@ export function NoirGridPage({
           <div className="border border-[#d4ff47]/20 bg-[#d4ff47]/10 p-8 text-white">
             <p className="font-mono-alt text-[11px] uppercase tracking-[0.3em] text-[#d4ff47]">{business.contactTitle}</p>
             <h2 className="mt-5 font-graphic text-4xl uppercase leading-[0.92] tracking-[-0.04em]">
-              Final command block.
+              {contactHeading}
             </h2>
             <p className="mt-5 max-w-xl text-base leading-8 text-white/74">{business.contactIntro}</p>
             <div className="mt-8 flex flex-wrap gap-4">
@@ -281,16 +335,16 @@ export function NoirGridPage({
                 <ArrowUpRight className="h-4 w-4" />
               </a>
               <a href={whatsappHref} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 border border-white/14 px-6 py-3 font-semibold text-white">
-                Direct WhatsApp
+                {business.whatsapp ? "WhatsApp" : "Kontak"}
                 <MessageCircle className="h-4 w-4" />
               </a>
             </div>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
-            <TerminalCell icon={<Phone className="h-5 w-5" />} label="PHONE" value={business.phone} href={`tel:${business.phone}`} />
-            <TerminalCell icon={<MessageCircle className="h-5 w-5" />} label="WHATSAPP" value={business.whatsapp} href={whatsappHref} />
-            <TerminalCell icon={<MapPin className="h-5 w-5" />} label="ADDRESS" value={business.address} />
+            <TerminalCell icon={<Phone className="h-5 w-5" />} label="PHONE" value={safePhone} href={business.phone ? `tel:${business.phone}` : undefined} />
+            <TerminalCell icon={<MessageCircle className="h-5 w-5" />} label="WHATSAPP" value={safeWhatsapp} href={business.whatsapp ? whatsappHref : undefined} />
+            <TerminalCell icon={<MapPin className="h-5 w-5" />} label="ADDRESS" value={safeAddress} />
           </div>
         </div>
       </AnimatedSection>

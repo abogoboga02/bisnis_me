@@ -108,10 +108,11 @@ export function setAdminSessionCookie(response: NextResponse, admin: AdminIdenti
     name: ADMIN_SESSION_COOKIE,
     value: createAdminSessionValue(admin),
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     maxAge: SESSION_MAX_AGE,
     path: "/",
+    priority: "high",
   });
 }
 
@@ -120,9 +121,10 @@ export function clearAdminSessionCookie(response: NextResponse) {
     name: ADMIN_SESSION_COOKIE,
     value: "",
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     expires: new Date(0),
     path: "/",
+    priority: "high",
   });
 }

@@ -1,67 +1,79 @@
-import { NextResponse } from "next/server";
 import { deleteBusinessRecord, updateBusinessRecord } from "@/lib/business-store";
-import { getAdminSession } from "@/lib/admin-session";
+import {
+  assertJsonRequest,
+  assertRateLimit,
+  assertSameOrigin,
+  createRouteError,
+  handleRouteError,
+  jsonResponse,
+  requireAdminApiSession,
+} from "@/lib/route-security";
 
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
 
-type AppError = Error & { status?: number };
-
 export async function PUT(request: Request, context: RouteContext) {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+    assertSameOrigin(request);
+    assertJsonRequest(request);
+    assertRateLimit(request, {
+      namespace: "business-update",
+      max: 40,
+      windowMs: 10 * 60 * 1000,
+    });
 
+    const session = await requireAdminApiSession();
     const { id } = await context.params;
     const businessId = Number(id);
     if (!Number.isInteger(businessId) || businessId <= 0) {
-      return NextResponse.json({ error: "Business ID tidak valid." }, { status: 400 });
+      throw createRouteError(400, "Business ID tidak valid.");
     }
 
     const business = await updateBusinessRecord(businessId, await request.json(), session);
 
     if (!business) {
-      return NextResponse.json({ error: "Business not found." }, { status: 404 });
+      throw createRouteError(404, "Business not found.");
     }
 
-    return NextResponse.json({ data: business });
+    return jsonResponse({ data: business }, { noStore: true });
   } catch (error) {
-    const appError = error as AppError;
-    return NextResponse.json(
-      { error: appError.message || "Gagal memperbarui bisnis." },
-      { status: appError.status ?? 500 },
-    );
+    return handleRouteError(error, "Gagal memperbarui bisnis.");
   }
 }
 
-export async function DELETE(_request: Request, context: RouteContext) {
+export async function DELETE(request: Request, context: RouteContext) {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+    assertSameOrigin(request);
+    assertRateLimit(request, {
+      namespace: "business-delete",
+      max: 10,
+      windowMs: 10 * 60 * 1000,
+    });
 
+    const session = await requireAdminApiSession();
     const { id } = await context.params;
     const businessId = Number(id);
     if (!Number.isInteger(businessId) || businessId <= 0) {
-      return NextResponse.json({ error: "Business ID tidak valid." }, { status: 400 });
+      throw createRouteError(400, "Business ID tidak valid.");
     }
 
     const deleted = await deleteBusinessRecord(businessId, session);
 
     if (!deleted) {
-      return NextResponse.json({ error: "Business not found." }, { status: 404 });
+      throw createRouteError(404, "Business not found.");
     }
 
-    return new NextResponse(null, { status: 204 });
+    return new Response(null, {
+      status: 204,
+      headers: {
+        "Cache-Control": "no-store, no-cache, max-age=0, must-revalidate",
+        Pragma: "no-cache",
+        "X-Content-Type-Options": "nosniff",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+      },
+    });
   } catch (error) {
-    const appError = error as AppError;
-    return NextResponse.json(
-      { error: appError.message || "Gagal menghapus bisnis." },
-      { status: appError.status ?? 500 },
-    );
+    return handleRouteError(error, "Gagal menghapus bisnis.");
   }
 }

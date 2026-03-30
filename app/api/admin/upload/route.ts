@@ -1,12 +1,20 @@
 import { promises as fs } from "node:fs";
 import crypto from "node:crypto";
 import path from "node:path";
-import { NextResponse } from "next/server";
-import { getAdminSession } from "@/lib/admin-session";
+import {
+  ADMIN_UPLOAD_ALLOWED_TYPES,
+  ADMIN_UPLOAD_HELPER_TEXT,
+  ADMIN_UPLOAD_MAX_FILE_SIZE,
+} from "@/lib/admin-upload";
+import {
+  assertRateLimit,
+  assertSameOrigin,
+  createRouteError,
+  handleRouteError,
+  jsonResponse,
+  requireAdminApiSession,
+} from "@/lib/route-security";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"]);
 
 function getExtension(file: File) {
   const originalName = file.name || "upload";
@@ -22,11 +30,54 @@ function getExtension(file: File) {
       return ".png";
     case "image/webp":
       return ".webp";
-    case "image/svg+xml":
-      return ".svg";
     default:
       return "";
   }
+}
+
+function detectMimeFromBuffer(buffer: Buffer) {
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "image/jpeg";
+  }
+
+  if (
+    buffer.length >= 8 &&
+    buffer[0] === 0x89 &&
+    buffer[1] === 0x50 &&
+    buffer[2] === 0x4e &&
+    buffer[3] === 0x47 &&
+    buffer[4] === 0x0d &&
+    buffer[5] === 0x0a &&
+    buffer[6] === 0x1a &&
+    buffer[7] === 0x0a
+  ) {
+    return "image/png";
+  }
+
+  if (buffer.length >= 12 && buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") {
+    return "image/webp";
+  }
+
+  return null;
+}
+
+async function validateImageFile(file: File) {
+  if (!ADMIN_UPLOAD_ALLOWED_TYPES.has(file.type)) {
+    throw createRouteError(400, "Format gambar wajib JPG, PNG, atau WEBP.");
+  }
+
+  if (file.size > ADMIN_UPLOAD_MAX_FILE_SIZE) {
+    throw createRouteError(400, "Ukuran gambar maksimal 2 MB.");
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const detectedMime = detectMimeFromBuffer(buffer);
+
+  if (!detectedMime || detectedMime !== file.type) {
+    throw createRouteError(400, "File gambar tidak valid atau terdeteksi sebagai file berbahaya.");
+  }
+
+  return buffer;
 }
 
 function shouldUseSupabaseStorage() {
@@ -55,7 +106,7 @@ async function ensureBucket() {
 
   const createResult = await supabase.storage.createBucket(bucketName, {
     public: true,
-    fileSizeLimit: `${MAX_FILE_SIZE}`,
+    fileSizeLimit: `${ADMIN_UPLOAD_MAX_FILE_SIZE}`,
   });
 
   if (createResult.error && !createResult.error.message.toLowerCase().includes("already")) {
@@ -71,7 +122,7 @@ async function uploadToSupabaseStorage(file: File) {
   const extension = getExtension(file);
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
   const storagePath = `businesses/${fileName}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await validateImageFile(file);
 
   const { error } = await supabase.storage.from(bucketName).upload(storagePath, buffer, {
     contentType: file.type,
@@ -96,7 +147,7 @@ async function uploadToLocalDisk(file: File) {
   const extension = getExtension(file);
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
   const absolutePath = path.join(uploadDir, fileName);
-  const buffer = Buffer.from(await file.arrayBuffer());
+  const buffer = await validateImageFile(file);
   await fs.writeFile(absolutePath, buffer);
 
   return {
@@ -106,36 +157,29 @@ async function uploadToLocalDisk(file: File) {
 }
 
 export async function POST(request: Request) {
-  const session = await getAdminSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-  }
-
   try {
+    await requireAdminApiSession();
+    assertSameOrigin(request);
+    assertRateLimit(request, {
+      namespace: "admin-upload",
+      max: 20,
+      windowMs: 10 * 60 * 1000,
+    });
+
     const formData = await request.formData();
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "File gambar wajib dikirim." }, { status: 400 });
-    }
-
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return NextResponse.json({ error: "Format gambar tidak didukung." }, { status: 400 });
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "Ukuran gambar maksimal 5 MB." }, { status: 400 });
+      throw createRouteError(400, "File gambar wajib dikirim.");
     }
 
     const uploaded = shouldUseSupabaseStorage()
       ? await uploadToSupabaseStorage(file)
       : await uploadToLocalDisk(file);
 
-    return NextResponse.json({ data: uploaded });
+    return jsonResponse({ data: uploaded }, { noStore: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Upload gambar gagal." },
-      { status: 500 },
-    );
+    const fallback = `Upload gambar gagal. ${ADMIN_UPLOAD_HELPER_TEXT}`;
+    return handleRouteError(error, fallback);
   }
 }

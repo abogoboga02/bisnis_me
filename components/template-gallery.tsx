@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Palette, WandSparkles } from "lucide-react";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
+import { resolveTemplatePreviewImage } from "@/lib/template-preview-image";
 import type { AdminIdentity, Template } from "@/lib/types";
 
 export function TemplateGallery({
@@ -46,51 +47,55 @@ export function TemplateGallery({
               Belum ada template yang muncul untuk akun ini.
             </div>
           ) : (
-            templates.map((template) => (
-              <article key={template.id} className="glass-panel rounded-[2rem] p-6">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="rounded-3xl bg-white/5 p-4">
-                    <Palette className="h-6 w-6 text-cyan-200" />
-                  </div>
-                  <span className="h-3 w-3 rounded-full" style={{ backgroundColor: template.accent ?? "#67e8f9" }} />
-                </div>
+            templates.map((template) => {
+              const previewImage = resolveTemplatePreviewImage(template.key, template.previewImage);
 
-                <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/35">
-                  {template.previewImage ? (
-                    <Image
-                      src={template.previewImage}
-                      alt={template.name}
-                      width={1200}
-                      height={720}
-                      unoptimized
-                      className="aspect-video w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-video items-center justify-center bg-[linear-gradient(135deg,rgba(103,232,249,0.14),rgba(255,255,255,0.04),rgba(14,165,233,0.12))] text-sm text-slate-400">
-                      Preview image belum diisi
+              return (
+                <article key={template.id} className="glass-panel rounded-[2rem] p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="rounded-3xl bg-white/5 p-4">
+                      <Palette className="h-6 w-6 text-cyan-200" />
                     </div>
-                  )}
-                </div>
-
-                <h2 className="mt-6 text-2xl font-semibold text-white">{template.name}</h2>
-                <p className="mt-3 text-sm leading-6 text-slate-300">{template.description}</p>
-
-                <div className="mt-6 grid gap-4 md:grid-cols-2">
-                  <div className="rounded-3xl border border-white/10 bg-slate-950/35 p-5">
-                    <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">Kategori</p>
-                    <p className="mt-3 text-base font-semibold text-white">{template.categoryLabel || template.category}</p>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{template.fit || "Belum ada deskripsi kecocokan bisnis."}</p>
+                    <span className="h-3 w-3 rounded-full" style={{ backgroundColor: template.accent ?? "#67e8f9" }} />
                   </div>
-                  <div className="rounded-3xl border border-white/10 bg-slate-950/35 p-5">
-                    <div className="flex items-center gap-3 text-sm text-slate-300">
-                      <WandSparkles className="h-4 w-4 text-cyan-200" />
-                      Highlight template
+
+                  <div className="mt-6 overflow-hidden rounded-[1.75rem] border border-white/10 bg-slate-950/35">
+                    {previewImage ? (
+                      <Image
+                        src={previewImage}
+                        alt={template.name}
+                        width={1200}
+                        height={720}
+                        unoptimized
+                        className="aspect-video w-full object-cover"
+                      />
+                    ) : (
+                      <div className="flex aspect-video items-center justify-center bg-[linear-gradient(135deg,rgba(103,232,249,0.14),rgba(255,255,255,0.04),rgba(14,165,233,0.12))] text-sm text-slate-400">
+                        Preview image belum diisi
+                      </div>
+                    )}
+                  </div>
+
+                  <h2 className="mt-6 text-2xl font-semibold text-white">{template.name}</h2>
+                  <p className="mt-3 text-sm leading-6 text-slate-300">{template.description}</p>
+
+                  <div className="mt-6 grid gap-4 md:grid-cols-2">
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/35 p-5">
+                      <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">Kategori</p>
+                      <p className="mt-3 text-base font-semibold text-white">{template.categoryLabel || template.category}</p>
+                      <p className="mt-3 text-sm leading-6 text-slate-300">{template.fit || "Belum ada deskripsi kecocokan bisnis."}</p>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{template.feature || "Belum ada fitur unggulan yang diisi."}</p>
+                    <div className="rounded-3xl border border-white/10 bg-slate-950/35 p-5">
+                      <div className="flex items-center gap-3 text-sm text-slate-300">
+                        <WandSparkles className="h-4 w-4 text-cyan-200" />
+                        Highlight template
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-slate-300">{template.feature || "Belum ada fitur unggulan yang diisi."}</p>
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))
+                </article>
+              );
+            })
           )}
         </section>
       </div>

@@ -46,6 +46,9 @@ export type Business = {
   galleryIntro: string;
   contactTitle: string;
   contactIntro: string;
+  boardmemoLabel: string;
+  boardmemoTitle: string;
+  boardmemoBody: string;
   phone: string;
   whatsapp: string;
   address: string;
@@ -83,4 +86,14 @@ export type AdminIdentity = {
   email: string;
   name: string;
   role: AdminRole;
+};
+
+export type ManagedUser = {
+  id: number;
+  email: string;
+  name: string;
+  role: AdminRole;
+  businessIds: number[];
+  createdAt?: string;
+  updatedAt?: string;
 };

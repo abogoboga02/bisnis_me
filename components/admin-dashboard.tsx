@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { ArrowRight, Building2, ImageIcon, LayoutTemplate, MessageCircleMore, ShieldCheck } from "lucide-react";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
-import type { AdminIdentity, Business, Template } from "@/lib/types";
+import { OwnerUserManager } from "@/components/owner-user-manager";
+import type { AdminIdentity, Business, ManagedUser, Template } from "@/lib/types";
 
 export function AdminDashboard({
   currentAdmin,
   businesses,
   templates,
+  users,
 }: {
   currentAdmin: AdminIdentity;
   businesses: Business[];
   templates: Template[];
+  users: ManagedUser[];
 }) {
   const totalServices = businesses.reduce((total, business) => total + business.services.length, 0);
   const totalTestimonials = businesses.reduce((total, business) => total + business.testimonials.length, 0);
@@ -105,7 +108,6 @@ export function AdminDashboard({
                         </Link>
                       </div>
                     </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-300">{business.description}</p>
                   </div>
                 ))}
               </div>
@@ -141,6 +143,10 @@ export function AdminDashboard({
             </div>
           </div>
         </section>
+
+        {currentAdmin.role === "owner" ? (
+          <OwnerUserManager businesses={businesses} initialUsers={users} />
+        ) : null}
       </div>
     </main>
   );

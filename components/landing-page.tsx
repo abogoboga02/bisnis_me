@@ -11,52 +11,35 @@ import { HarborLedgerPage } from "@/components/harbor-ledger-page";
 import { NoirGridPage } from "@/components/noir-grid-page";
 import { PrismRiotPage } from "@/components/prism-riot-page";
 import { SignalFramePage } from "@/components/signal-frame-page";
+import { buildWhatsAppHref } from "@/lib/contact-utils";
 import { iconMap } from "@/lib/icon-map";
 import type { Business } from "@/lib/types";
 
+const templateRenderers = {
+  "signal-frame": SignalFramePage,
+  "noir-grid": NoirGridPage,
+  "prism-riot": PrismRiotPage,
+  "harbor-ledger": HarborLedgerPage,
+  "atelier-mosaic": AtelierMosaicPage,
+} as const;
+
 export function LandingPage({ business }: { business: Business }) {
-  const whatsappHref = business.whatsapp ? `https://wa.me/${business.whatsapp.replace(/\D/g, "")}` : "#";
+  const whatsappHref = buildWhatsAppHref(business.whatsapp);
+  const TemplateRenderer = business.templateKey ? templateRenderers[business.templateKey as keyof typeof templateRenderers] : null;
 
-  if (business.templateKey === "signal-frame") {
-    return <SignalFramePage business={business} whatsappHref={whatsappHref} />;
+  if (TemplateRenderer) {
+    return <TemplateRenderer business={business} whatsappHref={whatsappHref} />;
   }
 
-  if (business.templateKey === "noir-grid") {
-    return <NoirGridPage business={business} whatsappHref={whatsappHref} />;
-  }
-
-  if (business.templateKey === "prism-riot") {
-    return <PrismRiotPage business={business} whatsappHref={whatsappHref} />;
-  }
-
-  if (business.templateKey === "harbor-ledger") {
-    return <HarborLedgerPage business={business} whatsappHref={whatsappHref} />;
-  }
-
-  if (business.templateKey === "atelier-mosaic") {
-    return <AtelierMosaicPage business={business} whatsappHref={whatsappHref} />;
-  }
-
-  const templateTheme =
-    business.templateKey === "solar-studio"
-      ? {
-          overlay: "bg-[#2c1204]/50",
-          badge: "border-orange-200/20 bg-orange-100/10 text-orange-100/90",
-          primaryButton: "bg-orange-300 text-[#3b1802]",
-          panelAccent: "text-orange-200/80",
-          cardAccent: "bg-orange-300/12 text-orange-100",
-          fallbackBackground:
-            "bg-[radial-gradient(circle_at_top_left,_rgba(251,146,60,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(253,186,116,0.28),_transparent_22%),linear-gradient(135deg,_#2c1204_0%,_#4a1f08_42%,_#120b08_100%)]",
-        }
-      : {
-          overlay: "bg-slate-950/50",
-          badge: "border-white/12 bg-white/5 text-cyan-100/90",
-          primaryButton: "bg-cyan-300 text-slate-950",
-          panelAccent: "text-cyan-100/70",
-          cardAccent: "bg-cyan-300/12 text-cyan-200",
-          fallbackBackground:
-            "bg-[radial-gradient(circle_at_top_left,_rgba(103,232,249,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(192,132,252,0.32),_transparent_22%),linear-gradient(135deg,_#0f172a_0%,_#111827_42%,_#172554_100%)]",
-        };
+  const templateTheme = {
+    overlay: "bg-slate-950/50",
+    badge: "border-white/12 bg-white/5 text-cyan-100/90",
+    primaryButton: "bg-cyan-300 text-slate-950",
+    panelAccent: "text-cyan-100/70",
+    cardAccent: "bg-cyan-300/12 text-cyan-200",
+    fallbackBackground:
+      "bg-[radial-gradient(circle_at_top_left,_rgba(103,232,249,0.38),_transparent_26%),radial-gradient(circle_at_80%_20%,_rgba(192,132,252,0.32),_transparent_22%),linear-gradient(135deg,_#0f172a_0%,_#111827_42%,_#172554_100%)]",
+  };
 
   return (
     <main className="overflow-hidden">

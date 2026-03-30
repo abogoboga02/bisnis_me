@@ -48,8 +48,8 @@ async function upsertBusinesses(client, templateIdByKey) {
       `
       INSERT INTO businesses (
         template_id, slug, name, tagline, description, hero_image, hero_cta_label, hero_cta_url,
-        phone, whatsapp, address, meta_title, meta_description, og_image
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+        boardmemo_label, boardmemo_title, boardmemo_body, phone, whatsapp, address, meta_title, meta_description, og_image
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
       ON CONFLICT (slug) DO UPDATE
       SET template_id = EXCLUDED.template_id,
           name = EXCLUDED.name,
@@ -58,6 +58,9 @@ async function upsertBusinesses(client, templateIdByKey) {
           hero_image = EXCLUDED.hero_image,
           hero_cta_label = EXCLUDED.hero_cta_label,
           hero_cta_url = EXCLUDED.hero_cta_url,
+          boardmemo_label = EXCLUDED.boardmemo_label,
+          boardmemo_title = EXCLUDED.boardmemo_title,
+          boardmemo_body = EXCLUDED.boardmemo_body,
           phone = EXCLUDED.phone,
           whatsapp = EXCLUDED.whatsapp,
           address = EXCLUDED.address,
@@ -76,6 +79,9 @@ async function upsertBusinesses(client, templateIdByKey) {
         business.heroImage,
         business.heroCtaLabel,
         business.heroCtaUrl,
+        business.boardmemoLabel || "Board Memo",
+        business.boardmemoTitle || "Structured direction for a sharper first impression.",
+        business.boardmemoBody || "",
         business.phone,
         business.whatsapp,
         business.address,

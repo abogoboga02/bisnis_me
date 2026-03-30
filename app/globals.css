@@ -503,6 +503,10 @@ h6 {
     auroraSlide 20s ease-in-out infinite;
 }
 
+.atelier-mobile-nav {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .marketing-title {
     max-width: 12ch;
@@ -511,5 +515,298 @@ h6 {
 
   .marketing-copy {
     font-size: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .atelier-mosaic-page [id] {
+    scroll-margin-top: 5.5rem;
+  }
+
+  .atelier-hero-shell,
+  .atelier-section-shell,
+  .atelier-mosaic-page #contact {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  .atelier-hero-shell {
+    padding-top: 18px !important;
+    padding-bottom: 72px !important;
+  }
+
+  .atelier-header {
+    align-items: flex-start;
+    gap: 0.9rem;
+    padding-bottom: 1rem;
+  }
+
+  .atelier-header-brand {
+    font-size: 0.82rem;
+    letter-spacing: 0.28em;
+  }
+
+  .atelier-header-admin {
+    padding: 0.78rem 1rem;
+    font-size: 0.82rem;
+    line-height: 1;
+  }
+
+  .atelier-mobile-nav {
+    display: flex;
+    gap: 0.7rem;
+    overflow-x: auto;
+    padding: 1rem 0 0.15rem;
+    margin-inline: -2px;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .atelier-mobile-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .atelier-mobile-nav a {
+    flex: 0 0 auto;
+    border: 1px solid rgba(21, 32, 58, 0.12);
+    background: rgba(255, 255, 255, 0.88);
+    padding: 0.82rem 1rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #15203a;
+    box-shadow: 0 12px 28px rgba(21, 32, 58, 0.06);
+  }
+
+  .atelier-hero-grid,
+  .atelier-about-grid,
+  .atelier-testimonials-grid,
+  .atelier-contact-grid {
+    display: flex !important;
+    flex-direction: column;
+  }
+
+  .atelier-hero-grid {
+    gap: 1.8rem !important;
+    padding-top: 1.75rem !important;
+  }
+
+  .atelier-hero-copy-grid,
+  .atelier-about-side,
+  .atelier-contact-side {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  .atelier-hero-copy {
+    gap: 1.5rem;
+  }
+
+  .atelier-hero-badge {
+    padding: 0.78rem 1rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.22em;
+  }
+
+  .atelier-hero-title {
+    max-width: 8ch;
+    font-size: clamp(3.75rem, 18vw, 5.4rem) !important;
+    line-height: 0.88 !important;
+    letter-spacing: -0.06em !important;
+  }
+
+  .atelier-hero-tagline {
+    max-width: none !important;
+    font-size: 1.22rem !important;
+    line-height: 1.72 !important;
+  }
+
+  .atelier-hero-description,
+  .atelier-section-intro,
+  .atelier-service-card p,
+  .atelier-testimonial-card p,
+  .atelier-contact-primary p,
+  .atelier-contact-cell p:last-child,
+  .atelier-gallery-card p {
+    font-size: 1rem !important;
+    line-height: 1.82 !important;
+  }
+
+  .atelier-hero-actions,
+  .atelier-contact-actions {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 0.85rem !important;
+  }
+
+  .atelier-hero-primary,
+  .atelier-hero-secondary,
+  .atelier-contact-action {
+    width: 100%;
+    min-height: 56px;
+    justify-content: space-between;
+    padding-inline: 1.1rem !important;
+  }
+
+  .atelier-hero-visual-frame {
+    align-self: stretch !important;
+    display: block !important;
+    min-height: 0 !important;
+    width: 100% !important;
+  }
+
+  .atelier-hero-visual {
+    min-height: 25rem !important;
+    width: 100% !important;
+  }
+
+  .atelier-boardmemo-box {
+    left: 16px !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    max-width: none !important;
+    padding: 0.9rem 0.95rem 1rem !important;
+    background: rgba(21, 32, 58, 0.88) !important;
+  }
+
+  .atelier-boardmemo-label {
+    font-size: 0.62rem !important;
+    letter-spacing: 0.28em !important;
+  }
+
+  .atelier-boardmemo-title {
+    margin-top: 0.45rem !important;
+    font-size: 1.45rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .atelier-boardmemo-body {
+    margin-top: 0.65rem !important;
+    font-size: 0.9rem !important;
+    line-height: 1.62 !important;
+  }
+
+  .atelier-section-shell,
+  .atelier-mosaic-page #contact {
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
+  }
+
+  .atelier-section-head {
+    margin-bottom: 1.5rem !important;
+    gap: 0.7rem !important;
+  }
+
+  .atelier-section-label {
+    font-size: 0.72rem !important;
+    letter-spacing: 0.24em !important;
+  }
+
+  .atelier-section-title,
+  .atelier-contact-primary h2 {
+    font-size: clamp(2.8rem, 12vw, 4rem) !important;
+    line-height: 0.94 !important;
+    letter-spacing: -0.05em !important;
+  }
+
+  .atelier-about-grid,
+  .atelier-about-side,
+  .atelier-services-grid,
+  .atelier-testimonials-list,
+  .atelier-gallery-grid,
+  .atelier-contact-cards {
+    gap: 0.9rem !important;
+  }
+
+  .atelier-about-primary,
+  .atelier-about-secondary,
+  .atelier-about-metrics,
+  .atelier-contact-primary,
+  .atelier-contact-side,
+  .atelier-contact-cell {
+    min-height: 0 !important;
+  }
+
+  .atelier-about-primary > div,
+  .atelier-about-secondary > div,
+  .atelier-contact-primary {
+    padding: 1.35rem !important;
+  }
+
+  .atelier-about-primary h3,
+  .atelier-about-secondary .font-display {
+    font-size: clamp(2.35rem, 10vw, 3.35rem) !important;
+    line-height: 0.96 !important;
+  }
+
+  .atelier-about-primary p:last-child,
+  .atelier-about-secondary p {
+    max-width: none !important;
+  }
+
+  .atelier-about-metrics .grid[class*="md:grid-cols-2"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  .atelier-services-grid,
+  .atelier-testimonials-list,
+  .atelier-gallery-grid,
+  .atelier-contact-cards {
+    grid-template-columns: 1fr !important;
+  }
+
+  .atelier-service-card,
+  .atelier-testimonial-feature,
+  .atelier-testimonial-card,
+  .atelier-gallery-card,
+  .atelier-contact-cell {
+    padding: 1.2rem !important;
+  }
+
+  .atelier-service-card h3,
+  .atelier-gallery-card h3 {
+    font-size: 1.65rem !important;
+    line-height: 1.08 !important;
+  }
+
+  .atelier-testimonial-feature .font-display {
+    font-size: 2.15rem !important;
+    line-height: 1.02 !important;
+  }
+
+  .atelier-gallery-grid {
+    grid-template-rows: none !important;
+    padding: 4px !important;
+  }
+
+  .atelier-gallery-grid > div {
+    grid-column: auto !important;
+    grid-row: auto !important;
+  }
+
+  .atelier-gallery-card {
+    min-height: 19rem !important;
+  }
+
+  .atelier-gallery-card img {
+    object-fit: cover !important;
+  }
+
+  .atelier-gallery-card .absolute.bottom-0 {
+    padding: 1.2rem !important;
+  }
+
+  .atelier-contact-cards {
+    grid-auto-rows: auto !important;
+  }
+
+  .atelier-contact-link {
+    height: auto !important;
+  }
+
+  .atelier-contact-cell .h-12.w-12 {
+    height: 2.85rem;
+    width: 2.85rem;
   }
 }

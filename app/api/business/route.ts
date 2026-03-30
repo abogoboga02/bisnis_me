@@ -1,24 +1,28 @@
-import { NextResponse } from "next/server";
 import { createBusinessRecord } from "@/lib/business-store";
-import { getAdminSession } from "@/lib/admin-session";
-
-type AppError = Error & { status?: number };
+import {
+  assertJsonRequest,
+  assertRateLimit,
+  assertSameOrigin,
+  handleRouteError,
+  jsonResponse,
+  requireAdminApiSession,
+} from "@/lib/route-security";
 
 export async function POST(request: Request) {
   try {
-    const session = await getAdminSession();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
-    }
+    assertSameOrigin(request);
+    assertJsonRequest(request);
+    assertRateLimit(request, {
+      namespace: "business-create",
+      max: 20,
+      windowMs: 10 * 60 * 1000,
+    });
 
+    const session = await requireAdminApiSession();
     const body = await request.json();
     const business = await createBusinessRecord(body, session);
-    return NextResponse.json({ data: business });
+    return jsonResponse({ data: business }, { noStore: true });
   } catch (error) {
-    const appError = error as AppError;
-    return NextResponse.json(
-      { error: appError.message || "Gagal membuat bisnis." },
-      { status: appError.status ?? 500 },
-    );
+    return handleRouteError(error, "Gagal membuat bisnis.");
   }
 }

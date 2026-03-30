@@ -38,7 +38,10 @@ ADD COLUMN IF NOT EXISTS testimonials_intro TEXT NOT NULL DEFAULT '',
 ADD COLUMN IF NOT EXISTS gallery_title VARCHAR(160) NOT NULL DEFAULT 'Gallery',
 ADD COLUMN IF NOT EXISTS gallery_intro TEXT NOT NULL DEFAULT '',
 ADD COLUMN IF NOT EXISTS contact_title VARCHAR(160) NOT NULL DEFAULT 'Contact',
-ADD COLUMN IF NOT EXISTS contact_intro TEXT NOT NULL DEFAULT '';
+ADD COLUMN IF NOT EXISTS contact_intro TEXT NOT NULL DEFAULT '',
+ADD COLUMN IF NOT EXISTS boardmemo_label VARCHAR(120) NOT NULL DEFAULT 'Board Memo',
+ADD COLUMN IF NOT EXISTS boardmemo_title VARCHAR(160) NOT NULL DEFAULT 'Structured direction for a sharper first impression.',
+ADD COLUMN IF NOT EXISTS boardmemo_body TEXT NOT NULL DEFAULT '';
 
 UPDATE bisnis_me.businesses
 SET hero_label = COALESCE(NULLIF(hero_label, ''), 'Business template'),
@@ -51,7 +54,10 @@ SET hero_label = COALESCE(NULLIF(hero_label, ''), 'Business template'),
     gallery_title = COALESCE(NULLIF(gallery_title, ''), 'Galeri'),
     gallery_intro = COALESCE(NULLIF(gallery_intro, ''), 'Cuplikan visual, hasil kerja, dan suasana brand.'),
     contact_title = COALESCE(NULLIF(contact_title, ''), 'Hubungi Kami'),
-    contact_intro = COALESCE(NULLIF(contact_intro, ''), 'Hubungi bisnis melalui telepon, WhatsApp, atau alamat yang tersedia.');
+    contact_intro = COALESCE(NULLIF(contact_intro, ''), 'Hubungi bisnis melalui telepon, WhatsApp, atau alamat yang tersedia.'),
+    boardmemo_label = COALESCE(NULLIF(boardmemo_label, ''), 'Board Memo'),
+    boardmemo_title = COALESCE(NULLIF(boardmemo_title, ''), 'Structured direction for a sharper first impression.'),
+    boardmemo_body = COALESCE(NULLIF(boardmemo_body, ''), '');
 
 CREATE TABLE IF NOT EXISTS bisnis_me.testimonials (
   id SERIAL PRIMARY KEY,
@@ -152,6 +158,25 @@ SET name = EXCLUDED.name,
     feature = EXCLUDED.feature,
     preview_image = EXCLUDED.preview_image,
     updated_at = NOW();
+
+UPDATE bisnis_me.businesses
+SET template_id = replacement.id,
+    updated_at = NOW()
+FROM bisnis_me.templates current_template
+JOIN bisnis_me.templates replacement ON replacement.key = 'signal-frame'
+WHERE bisnis_me.businesses.template_id = current_template.id
+  AND current_template.key = 'aurora-saas';
+
+UPDATE bisnis_me.businesses
+SET template_id = replacement.id,
+    updated_at = NOW()
+FROM bisnis_me.templates current_template
+JOIN bisnis_me.templates replacement ON replacement.key = 'harbor-ledger'
+WHERE bisnis_me.businesses.template_id = current_template.id
+  AND current_template.key = 'solar-studio';
+
+DELETE FROM bisnis_me.templates
+WHERE key IN ('aurora-saas', 'solar-studio');
 
 INSERT INTO bisnis_me.templates (
   name,

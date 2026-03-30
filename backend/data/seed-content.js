@@ -1,27 +1,5 @@
 const seedTemplates = [
   {
-    name: "Aurora SaaS",
-    key: "aurora-saas",
-    description: "Glassmorphism hero, layered gradients, and animated service cards.",
-    accent: "#4f46e5",
-    category: "company-profile",
-    categoryLabel: "Company Profile",
-    fit: "Agency digital, software house, startup service, konsultan teknologi",
-    feature: "Hero glassmorphism, service cards, WhatsApp CTA, dan section content fleksibel.",
-    previewImage: "/uploads/seed/aurora-digital.svg",
-  },
-  {
-    name: "Solar Studio",
-    key: "solar-studio",
-    description: "Warm editorial look for food, retail, and hospitality brands.",
-    accent: "#f97316",
-    category: "toko-online",
-    categoryLabel: "Retail",
-    fit: "Retail lokal, kuliner, showroom, brand hospitality, toko spesialis",
-    feature: "Nuansa hangat, hero visual besar, service grid, dan CTA cepat untuk promosi.",
-    previewImage: "/uploads/seed/toko-budi.svg",
-  },
-  {
     name: "Atelier Mosaic",
     key: "atelier-mosaic",
     description: "Editorial storytelling layout with testimonials, gallery, and golden-ratio rhythm.",
@@ -88,6 +66,9 @@ const seedBusinesses = [
     heroImage: "/uploads/seed/aurora-digital.svg",
     heroCtaLabel: "Book a Strategy Call",
     heroCtaUrl: "#contact",
+    boardmemoLabel: "Board Memo",
+    boardmemoTitle: "Structured direction for a sharper first impression.",
+    boardmemoBody: "Gunakan boardmemo untuk menaruh ringkasan positioning, arahan presentasi, atau catatan formal yang mendukung panel hero tanpa memakan fokus gambar utama.",
     phone: "+62 812-3456-7890",
     whatsapp: "6281234567890",
     address: "Jl. Sudirman No. 88, Jakarta Pusat",
@@ -95,7 +76,7 @@ const seedBusinesses = [
     metaDescription:
       "Multi-service digital agency landing page with animated hero, services, and WhatsApp contact.",
     ogImage: "/uploads/seed/aurora-digital.svg",
-    templateKey: "aurora-saas",
+    templateKey: "signal-frame",
     services: [
       {
         name: "Landing Page Design",
@@ -123,6 +104,9 @@ const seedBusinesses = [
     heroImage: "/uploads/seed/toko-budi.svg",
     heroCtaLabel: "Chat via WhatsApp",
     heroCtaUrl: "#contact",
+    boardmemoLabel: "Board Memo",
+    boardmemoTitle: "A short note that adds extra context near the hero area.",
+    boardmemoBody: "",
     phone: "+62 811-9988-7766",
     whatsapp: "6281199887766",
     address: "Jl. Diponegoro No. 15, Surabaya",
@@ -130,7 +114,7 @@ const seedBusinesses = [
     metaDescription:
       "Retail landing page template with gradient hero, service cards, and sticky WhatsApp contact.",
     ogImage: "/uploads/seed/toko-budi.svg",
-    templateKey: "solar-studio",
+    templateKey: "harbor-ledger",
     services: [
       {
         name: "Produk Unggulan",
