@@ -229,7 +229,7 @@ export function HarborLedgerPage({
 
               <div className="relative min-h-[23rem] overflow-hidden rounded-[2rem] border border-[#112f47]/12 bg-[#c7d7e2] shadow-[0_24px_80px_rgba(17,47,71,0.08)] sm:min-h-[27rem]">
                 {business.heroImage ? (
-                  <Image src={business.heroImage} alt={business.name} fill priority unoptimized className="object-cover opacity-82" />
+                  <Image src={business.heroImage} alt={business.name} fill priority className="object-cover opacity-82" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(145deg,#d8e5ec_0%,#d8e5ec_40%,#bf7953_40%,#bf7953_44%,#eef3f6_44%,#eef3f6_70%,#112f47_70%,#112f47_100%)]" />
                 )}
@@ -315,7 +315,7 @@ export function HarborLedgerPage({
         <div className="grid gap-4 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="relative min-h-[20rem] overflow-hidden rounded-[2rem] border border-[#112f47]/12 bg-[#c7d7e2]">
             {galleryItems[0]?.imageUrl ? (
-              <Image src={galleryItems[0].imageUrl} alt={galleryItems[0].title} fill unoptimized className="object-cover" />
+              <Image src={galleryItems[0].imageUrl} alt={galleryItems[0].title} fill loading="lazy" className="object-cover" />
             ) : (
               <div className="absolute inset-0 bg-[linear-gradient(145deg,#d8e5ec_0%,#d8e5ec_44%,#bf7953_44%,#bf7953_48%,#eef3f6_48%,#eef3f6_100%)]" />
             )}

@@ -362,7 +362,7 @@ function ImagePreviewPanel({
   return (
     <div className="overflow-hidden rounded-[1.25rem] border border-white/10 bg-slate-950/45">
       {src ? (
-        <Image src={src} alt={alt} width={960} height={540} unoptimized className={`${heightClassName} w-full object-cover`} />
+        <Image src={src} alt={alt} width={960} height={540} loading="lazy" className={`${heightClassName} w-full object-cover`} />
       ) : (
         <div className={`flex items-center justify-center text-sm text-slate-500 ${heightClassName}`}>{emptyLabel}</div>
       )}

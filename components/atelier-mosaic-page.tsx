@@ -161,7 +161,7 @@ export function AtelierMosaicPage({
                 style={geoClip("0 0, 100% 0, 100% 92%, 94% 100%, 0 100%")}
               >
                 {heroImage ? (
-                  <Image src={heroImage} alt={business.name} fill priority unoptimized className="object-cover" />
+                  <Image src={heroImage} alt={business.name} fill priority className="object-cover" />
                 ) : (
                   <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_22%,rgba(225,30,37,0.18),transparent_24%),linear-gradient(140deg,#15203a_0%,#243250_48%,#eef2f7_48%,#eef2f7_100%)]" />
                 )}
@@ -448,7 +448,7 @@ function CorporateGalleryCard({
       style={geoClip("0 0, 100% 0, 100% 100%, 0 100%")}
     >
       {item.imageUrl ? (
-        <Image src={item.imageUrl} alt={item.title} fill unoptimized className="object-fill transition duration-700 group-hover:scale-[1.02]" />
+        <Image src={item.imageUrl} alt={item.title} fill loading="lazy" className="object-fill transition duration-700 group-hover:scale-[1.02]" />
       ) : (
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(225,30,37,0.14),transparent_28%),linear-gradient(135deg,#15203a_0%,#344361_52%,#eef2f7_52%,#eef2f7_100%)]" />
       )}

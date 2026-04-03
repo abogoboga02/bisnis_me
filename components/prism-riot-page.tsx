@@ -264,7 +264,7 @@ export function PrismRiotPage({
 
               <div className="relative min-h-[24rem] overflow-hidden bg-[#0c1f4d] sm:min-h-[29rem]" style={prismPanel("8% 0, 100% 6%, 92% 100%, 0 94%")}>
                 {business.heroImage ? (
-                  <Image src={business.heroImage} alt={business.name} fill priority unoptimized className="object-cover opacity-82" />
+                  <Image src={business.heroImage} alt={business.name} fill priority className="object-cover opacity-82" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(145deg,#0c1f4d_0%,#0c1f4d_32%,#215cff_32%,#215cff_48%,#ff5e4d_48%,#ff5e4d_64%,#d7ff48_64%,#d7ff48_80%,#fbf5ea_80%,#fbf5ea_100%)]" />
                 )}
@@ -393,7 +393,7 @@ export function PrismRiotPage({
                 style={prismPanel(index % 2 === 0 ? "0 0, 94% 0, 100% 100%, 8% 100%" : "8% 0, 100% 8%, 92% 100%, 0 92%")}
               >
                 {item.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.title} fill unoptimized className="object-cover transition duration-700 hover:scale-105" />
+                  <Image src={item.imageUrl} alt={item.title} fill loading="lazy" className="object-cover transition duration-700 hover:scale-105" />
                 ) : (
                   <div className={`absolute inset-0 ${index % 2 === 0 ? "bg-[linear-gradient(145deg,#215cff_0%,#215cff_40%,#fbf5ea_40%,#fbf5ea_56%,#ff5e4d_56%,#ff5e4d_100%)]" : "bg-[linear-gradient(145deg,#0c1f4d_0%,#0c1f4d_34%,#d7ff48_34%,#d7ff48_52%,#fbf5ea_52%,#fbf5ea_100%)]"}`} />
                 )}

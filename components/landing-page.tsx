@@ -46,7 +46,7 @@ export function LandingPage({ business }: { business: Business }) {
       <section className="relative isolate min-h-screen px-6 pb-14 pt-8 md:px-10">
         <motion.div initial={{ scale: 1.05, opacity: 0.65 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 1.2 }} className="absolute inset-0 -z-20">
           {business.heroImage ? (
-            <Image src={business.heroImage} alt={business.name} fill priority className="object-cover" unoptimized />
+            <Image src={business.heroImage} alt={business.name} fill priority className="object-cover" />
           ) : (
             <div className={`h-full w-full ${templateTheme.fallbackBackground}`} />
           )}
@@ -155,7 +155,7 @@ export function LandingPage({ business }: { business: Business }) {
           {business.galleryItems.map((item, index) => (
             <div key={`${item.id}-${index}`} className={`overflow-hidden rounded-[2rem] border border-white/10 bg-white/5 ${index === 0 ? "lg:row-span-2" : ""}`}>
               {item.imageUrl ? (
-                <Image src={item.imageUrl} alt={item.title} width={1200} height={900} unoptimized className="h-full min-h-64 w-full object-cover" />
+                <Image src={item.imageUrl} alt={item.title} width={1200} height={900} loading="lazy" className="h-full min-h-64 w-full object-cover" />
               ) : (
                 <div className="flex min-h-64 items-center justify-center bg-slate-950/30 text-sm text-slate-400">Belum ada gambar galeri.</div>
               )}

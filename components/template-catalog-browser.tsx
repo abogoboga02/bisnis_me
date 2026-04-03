@@ -179,7 +179,7 @@ export function TemplateCatalogBrowser({ templates }: { templates: Template[] })
               <aside className="border-b border-white/10 bg-[linear-gradient(180deg,rgba(255,253,238,0.05),rgba(255,253,238,0.02))] p-5 lg:border-b-0 lg:border-r lg:p-6">
                 <div className="overflow-hidden rounded-[1.4rem] border border-[#e3ef26]/14 bg-[linear-gradient(135deg,rgba(226,251,206,0.18),rgba(227,239,38,0.14),rgba(7,102,83,0.2),rgba(6,35,29,0.72))]">
                   {activePreviewImage ? (
-                    <Image src={activePreviewImage} alt={activeTemplate.name} width={1200} height={720} unoptimized className="aspect-video w-full object-cover" />
+                    <Image src={activePreviewImage} alt={activeTemplate.name} width={1200} height={720} loading="lazy" className="aspect-video w-full object-cover" />
                   ) : (
                     <div className="flex aspect-video items-center justify-center text-sm text-[#fffdee]/62">Preview Image</div>
                   )}
