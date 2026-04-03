@@ -193,7 +193,7 @@ export function SignalFramePage({
 
               <div className="relative min-h-[20rem] overflow-hidden border border-[#111111]/12 bg-[#111111] sm:min-h-[24rem] lg:min-h-[26rem]">
                 {business.heroImage ? (
-                  <Image src={business.heroImage} alt={business.name} fill priority unoptimized className="object-cover opacity-84" />
+                  <Image src={business.heroImage} alt={business.name} fill priority className="object-cover opacity-84" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,#161616_0%,#2b2b2b_38%,#d63f24_38%,#d63f24_52%,#f7f0e8_52%,#f7f0e8_68%,#161616_68%,#161616_100%)]" />
                 )}
@@ -304,7 +304,7 @@ export function SignalFramePage({
             {galleryItems.slice(0, 4).map((item, index) => (
               <div key={`${item.id}-${index}`} className="relative min-h-[11rem] overflow-hidden border border-[#111111]/12 bg-[#111111] sm:min-h-[15rem]">
                 {item.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.title} fill unoptimized className="object-cover transition duration-700 hover:scale-105" />
+                  <Image src={item.imageUrl} alt={item.title} fill loading="lazy" className="object-cover transition duration-700 hover:scale-105" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,#111111_0%,#111111_28%,#d63f24_28%,#d63f24_46%,#f7f0e8_46%,#f7f0e8_62%,#111111_62%,#111111_100%)]" />
                 )}

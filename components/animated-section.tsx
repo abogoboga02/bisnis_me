@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 
 export function AnimatedSection({
   children,
@@ -13,6 +14,28 @@ export function AnimatedSection({
   delay?: number;
   id?: string;
 }) {
+  const [reduceMotion, setReduceMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduceMotion(query.matches);
+
+    const listener = (event: MediaQueryListEvent) => {
+      setReduceMotion(event.matches);
+    };
+
+    query.addEventListener("change", listener);
+    return () => query.removeEventListener("change", listener);
+  }, []);
+
+  if (reduceMotion) {
+    return (
+      <section id={id} className={className}>
+        {children}
+      </section>
+    );
+  }
+
   return (
     <motion.section
       id={id}

@@ -303,7 +303,7 @@ export function BusinessManager({
                 return (
                   <button key={template.id} type="button" onClick={() => chooseTemplate(template.id)} className={`overflow-hidden rounded-[1.6rem] border text-left transition ${template.id === draft.templateId ? "border-cyan-300/40 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
                     <div className="h-28 w-full" style={{ background: previewImage ? undefined : `linear-gradient(135deg, ${template.accent ?? "#44d6e8"}22, rgba(255,255,255,0.08), rgba(15,23,42,0.18))` }}>
-                      {previewImage ? <Image src={previewImage} alt={template.name} width={720} height={320} unoptimized className="h-full w-full object-cover" /> : null}
+                      {previewImage ? <Image src={previewImage} alt={template.name} width={720} height={320} loading="lazy" className="h-full w-full object-cover" /> : null}
                     </div>
                     <div className="p-4">
                       <div className="flex items-start justify-between gap-3">

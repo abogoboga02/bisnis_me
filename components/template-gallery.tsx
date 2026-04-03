@@ -66,7 +66,7 @@ export function TemplateGallery({
                         alt={template.name}
                         width={1200}
                         height={720}
-                        unoptimized
+                        loading="lazy"
                         className="aspect-video w-full object-cover"
                       />
                     ) : (

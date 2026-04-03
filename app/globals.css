@@ -518,6 +518,35 @@ h6 {
   }
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-play-state: paused !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+    transition-timing-function: linear !important;
+  }
+
+  body::before,
+  body::after,
+  .nature-stage::after,
+  .homepage-stage::before,
+  .homepage-stage::after,
+  .marketing-hero::before,
+  .marketing-hero::after {
+    animation: none !important;
+  }
+
+  .premium-card,
+  .premium-button,
+  .premium-button-secondary,
+  .premium-pill,
+  .glow-ring::before {
+    transition: none !important;
+  }
+}
+
 @media (max-width: 768px) {
   .atelier-mosaic-page [id] {
     scroll-margin-top: 5.5rem;

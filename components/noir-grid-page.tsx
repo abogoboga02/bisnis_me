@@ -201,7 +201,7 @@ export function NoirGridPage({
 
               <div className="relative min-h-[26rem] overflow-hidden border border-white/10 bg-[#0b0b0b]">
                 {business.heroImage ? (
-                  <Image src={business.heroImage} alt={business.name} fill priority unoptimized className="object-cover opacity-72" />
+                  <Image src={business.heroImage} alt={business.name} fill priority className="object-cover opacity-72" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(135deg,#050505_0%,#050505_34%,#d4ff47_34%,#d4ff47_37%,#050505_37%,#050505_62%,#ffffff_62%,#ffffff_64%,#050505_64%,#050505_100%)]" />
                 )}
@@ -306,7 +306,7 @@ export function NoirGridPage({
             {galleryItems.slice(0, 4).map((item, index) => (
               <div key={`${item.id}-${index}`} className="relative min-h-[14rem] overflow-hidden border border-white/10 bg-[#0b0b0b]">
                 {item.imageUrl ? (
-                  <Image src={item.imageUrl} alt={item.title} fill unoptimized className="object-cover opacity-82 transition duration-700 hover:scale-105" />
+                  <Image src={item.imageUrl} alt={item.title} fill loading="lazy" className="object-cover opacity-82 transition duration-700 hover:scale-105" />
                 ) : (
                   <div className="absolute inset-0 bg-[linear-gradient(140deg,#050505_0%,#050505_44%,#d4ff47_44%,#d4ff47_47%,#050505_47%,#050505_100%)]" />
                 )}
