@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import {
   Archivo_Black,
   Bricolage_Grotesque,
