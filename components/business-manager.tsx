@@ -254,7 +254,7 @@ export function BusinessManager({
             {businesses.length === 0 ? (
               <div className="rounded-3xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-slate-300">Belum ada bisnis dalam scope akun ini.</div>
             ) : businesses.map((business) => (
-              <button key={business.id} onClick={() => selectBusiness(business.id)} type="button" className={`w-full rounded-3xl border p-4 text-left ${selectedId === business.id ? "border-cyan-300/35 bg-cyan-300/10" : "border-white/10 bg-white/5"}`}>
+              <button key={business.id} onClick={() => selectBusiness(business.id)} type="button" className={`w-full rounded-3xl border p-4 text-left transition-colors duration-150 ${selectedId === business.id ? "border-cyan-300/35 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/16 hover:bg-white/7"}`}>
                 <div className="flex items-center justify-between gap-3">
                   <p className="font-semibold text-white">{business.name}</p>
                   <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-slate-300">Edit</span>
@@ -274,7 +274,7 @@ export function BusinessManager({
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <Link href="/admin/dashboard" className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
+              <Link href="/admin/dashboard" className="rounded-full border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition-colors duration-150 hover:bg-white/10">
                 Back to Dashboard
               </Link>
               {draft.slug ? (
@@ -301,7 +301,7 @@ export function BusinessManager({
                 const previewImage = resolveTemplatePreviewImage(template.key, template.previewImage);
 
                 return (
-                  <button key={template.id} type="button" onClick={() => chooseTemplate(template.id)} className={`overflow-hidden rounded-[1.6rem] border text-left transition ${template.id === draft.templateId ? "border-cyan-300/40 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
+                  <button key={template.id} type="button" onClick={() => chooseTemplate(template.id)} className={`overflow-hidden rounded-[1.6rem] border text-left transition-colors duration-200 ${template.id === draft.templateId ? "border-cyan-300/40 bg-cyan-300/10" : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8"}`}>
                     <div className="h-28 w-full" style={{ background: previewImage ? undefined : `linear-gradient(135deg, ${template.accent ?? "#44d6e8"}22, rgba(255,255,255,0.08), rgba(15,23,42,0.18))` }}>
                       {previewImage ? <Image src={previewImage} alt={template.name} width={720} height={320} loading="lazy" className="h-full w-full object-cover" /> : null}
                     </div>
@@ -325,11 +325,11 @@ export function BusinessManager({
 
           <AnimatePresence mode="wait">
             {!selectedTemplate ? (
-              <motion.div key="empty" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} className="mt-8 rounded-[1.75rem] border border-dashed border-white/12 bg-white/5 p-6 text-sm leading-7 text-slate-300">
+              <motion.div key="empty" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.18, ease: "easeOut" }} className="mt-8 rounded-[1.75rem] border border-dashed border-white/12 bg-white/5 p-6 text-sm leading-7 text-slate-300">
                 Pilih salah satu template di atas dulu. Setelah itu box form akan muncul di bawah dan default title seperti About, Services, Testimonials, Gallery, dan Contact akan langsung terisi.
               </motion.div>
             ) : (
-              <motion.div key={selectedTemplate.key} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.28, ease: "easeOut" }} className="mt-8 space-y-8">
+              <motion.div key={selectedTemplate.key} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.2, ease: "easeOut" }} className="mt-8 space-y-8">
                 {isAtelier ? (
                   <section className=" gap-6 xl:grid-cols-[0.34fr_0.66fr]">
                     <div className="space-y-8">

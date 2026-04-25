@@ -6,7 +6,7 @@ export function MarketingNav() {
     <header className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <Link
         href="/"
-        className="premium-kicker text-sm font-semibold text-[#fffdee] transition duration-300 hover:text-[#e3ef26]"
+        className="premium-kicker text-sm font-semibold text-[#fffdee] transition-colors duration-200 hover:text-[#e3ef26]"
       >
         bisnis.me
       </Link>
@@ -16,7 +16,7 @@ export function MarketingNav() {
           <Link
             key={link.href}
             href={link.href}
-            className="premium-pill rounded-[14px] px-4 py-2.5 transition duration-300 hover:-translate-y-1.5 hover:border-[#e3ef26]/35 hover:text-[#fffdee]"
+            className="premium-pill rounded-[14px] px-4 py-2.5 transition-colors duration-200 hover:border-[#e3ef26]/35 hover:text-[#fffdee]"
           >
             {link.label}
           </Link>

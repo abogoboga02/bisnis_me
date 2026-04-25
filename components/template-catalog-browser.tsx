@@ -77,10 +77,10 @@ export function TemplateCatalogBrowser({ templates }: { templates: Template[] })
               key={option.value}
               type="button"
               onClick={() => setActiveFilter(option.value)}
-              className={`rounded-[14px] border px-4 py-2.5 text-sm font-semibold transition ${
+              className={`rounded-[14px] border px-4 py-2.5 text-sm font-semibold transition-colors duration-200 ${
                 isActive
                   ? "border-[#e3ef26]/32 bg-[linear-gradient(135deg,rgba(226,251,206,0.22),rgba(227,239,38,0.12),rgba(7,102,83,0.26))] text-[#fffdee] shadow-[0_18px_40px_rgba(227,239,38,0.08)]"
-                  : "premium-pill text-[#fffdee]/72 hover:-translate-y-1.5 hover:border-[#e3ef26]/30 hover:text-[#fffdee]"
+                  : "premium-pill text-[#fffdee]/72 hover:border-[#e3ef26]/30 hover:text-[#fffdee]"
               }`}
             >
               {option.label}
@@ -125,7 +125,7 @@ export function TemplateCatalogBrowser({ templates }: { templates: Template[] })
                 <button
                   type="button"
                   onClick={() => setActiveTemplate(template)}
-                  className="glow-ring premium-button inline-flex items-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold"
+                  className="premium-button inline-flex items-center gap-2 rounded-[14px] px-4 py-2.5 text-sm font-semibold"
                 >
                   <MonitorPlay className="h-4 w-4" />
                   Preview Interaktif
