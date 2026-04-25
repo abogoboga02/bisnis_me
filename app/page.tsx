@@ -11,6 +11,7 @@ import {
   heroBenefits,
   howItWorks,
 } from "@/lib/marketing-content";
+import { resolveTemplatePreviewImage } from "@/lib/template-preview-image";
 import type { Template } from "@/lib/types";
 
 export default function HomePage() {
@@ -121,10 +122,10 @@ export default function HomePage() {
             transition={{ duration: 0.7, delay: 0.4 }}
           >
             <motion.div
-              className="glass-panel relative min-h-[30rem] overflow-hidden rounded-[2rem] border border-[#e3ef26]/14 bg-[radial-gradient(circle_at_top,rgba(39,119,99,0.3),transparent_34%),linear-gradient(180deg,rgba(8,39,33,0.84),rgba(6,35,29,0.96))] p-4 sm:min-h-[33rem] sm:p-5 md:p-6"
+              className="hero-visual-shell relative min-h-[30rem] overflow-hidden rounded-[2rem] p-4 sm:min-h-[33rem] sm:p-5 md:p-6"
               whileHover={{ boxShadow: "0 32px 70px rgba(2, 15, 12, 0.28)" }}
             >
-              <div className="absolute inset-x-3 bottom-0 top-8 sm:inset-x-4 sm:top-5 scale-110">
+              <div className="hero-visual-image-wrap absolute inset-x-3 bottom-0 top-8 sm:inset-x-4 sm:top-5 scale-110">
                 <Image
                   src="/uploads/businesses/1774614258065-3d3dddc4-83d6-47d8-a6de-b6417f64bc191.png"
                   alt="Contoh visual hero website bisnis"
@@ -133,17 +134,19 @@ export default function HomePage() {
                   className="object-contain object-top"
                 />
               </div>
-              <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,22,18,0.06),rgba(3,22,18,0.02)_28%,rgba(3,22,18,0.14)_48%,rgba(3,22,18,0.76))]" />
-                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+              <div className="hero-visual-overlay absolute inset-0 bg-[linear-gradient(180deg,rgba(3,22,18,0.06),rgba(3,22,18,0.02)_28%,rgba(3,22,18,0.14)_48%,rgba(3,22,18,0.76))]" />
+              <div className="absolute left-4 top-4 z-10 flex flex-wrap gap-2 sm:left-5 sm:top-5">
+                <span className="hero-visual-chip">
                   No Coding
                 </span>
-                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+                <span className="hero-visual-chip">
                   Mobile Friendly
                 </span>
-                <span className="rounded-full border border-[#fffdee]/12 bg-[#06231d]/70 px-3 py-1 text-[11px] font-medium text-[#fffdee]/84 backdrop-blur">
+                <span className="hero-visual-chip">
                   SEO Optimized
                 </span>
-              <div className="absolute inset-x-4 bottom-4 z-10 rounded-[1.45rem] border border-[#fffdee]/10 bg-[#06231d]/58 p-4 text-left backdrop-blur-xl sm:inset-x-5 sm:bottom-5">
+              </div>
+              <div className="hero-visual-card absolute inset-x-4 bottom-4 z-10 p-4 text-left sm:inset-x-5 sm:bottom-5">
                 <p className="premium-kicker text-[11px] text-[#e3ef26]">Hero Visual</p>
                 <h2 className="mt-3 text-balance text-[21px] font-semibold leading-[1.02] text-[#fffdee] sm:text-[25px] md:text-[29px]">
                   Tampilan yang langsung terasa hidup
@@ -302,24 +305,34 @@ export default function HomePage() {
         </motion.div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {templates.map((template, idx) => (
-            <motion.article
-              key={template.id}
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: idx * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -6, boxShadow: "0 30px 60px rgba(2, 15, 12, 0.26)" }}
-              className="premium-card rounded-[28px] p-6 transition-all duration-300"
-            >
-              <motion.div
-                className="mb-5 flex aspect-video items-center justify-center rounded-[22px] border border-[#e3ef26]/14 bg-[linear-gradient(135deg,rgba(226,251,206,0.18),rgba(227,239,38,0.14),rgba(7,102,83,0.2),rgba(6,35,29,0.72))]"
-                whileHover={{ scale: 1.05 }}
+          {templates.map((template, idx) => {
+            const previewImage = resolveTemplatePreviewImage(template.key, template.previewImage);
+
+            return (
+              <motion.article
+                key={template.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                viewport={{ once: true }}
+                className="premium-card rounded-[28px] p-6 transition-all duration-300"
               >
-                <span className="px-6 text-center text-sm font-medium text-[#fffdee]/62">
-                  {template.previewImage ? "Preview image tersedia di database" : "Preview image belum diisi"}
-                </span>
-              </motion.div>
+                <div className="mb-5 overflow-hidden rounded-[22px] border border-[#e3ef26]/14 bg-[linear-gradient(135deg,rgba(226,251,206,0.18),rgba(227,239,38,0.14),rgba(7,102,83,0.2),rgba(6,35,29,0.72))]">
+                  {previewImage ? (
+                    <Image
+                      src={previewImage}
+                      alt={`${template.name} preview`}
+                      width={1200}
+                      height={720}
+                      loading="lazy"
+                      className="aspect-video w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex aspect-video items-center justify-center px-6 text-center text-sm font-medium text-[#fffdee]/62">
+                      Preview image belum diisi
+                    </div>
+                  )}
+                </div>
               <div className="mb-4 flex items-center justify-between gap-3">
                 <span
                   className="premium-kicker rounded-[14px] px-3 py-1.5 text-[11px] font-bold text-[#06231d]"
@@ -332,7 +345,8 @@ export default function HomePage() {
               <h3 className="text-[26px] font-semibold text-[#fffdee]">{template.name}</h3>
               <p className="mt-3 text-sm leading-7 text-[#fffdee]/72">{template.feature || template.description}</p>
             </motion.article>
-          ))}
+          );
+          })}
         </div>
 
         <motion.p

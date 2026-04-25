@@ -181,6 +181,32 @@ h6 {
   backdrop-filter: blur(24px);
 }
 
+.hero-visual-shell {
+  border: 1px solid rgba(227, 239, 38, 0.14);
+  background:
+    radial-gradient(circle at top, rgba(39, 119, 99, 0.22), transparent 34%),
+    linear-gradient(180deg, rgba(8, 39, 33, 0.9), rgba(6, 35, 29, 0.97));
+  box-shadow: var(--shadow-soft);
+}
+
+.hero-visual-chip {
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 253, 238, 0.16);
+  background: linear-gradient(180deg, rgba(6, 35, 29, 0.94), rgba(6, 35, 29, 0.82));
+  padding: 0.25rem 0.75rem;
+  color: rgba(255, 253, 238, 0.92);
+  font-size: 11px;
+  font-weight: 600;
+  box-shadow: 0 8px 20px rgba(2, 15, 12, 0.28);
+}
+
+.hero-visual-card {
+  border-radius: 1.45rem;
+  border: 1px solid rgba(255, 253, 238, 0.12);
+  background: linear-gradient(180deg, rgba(6, 35, 29, 0.92), rgba(6, 35, 29, 0.84));
+  box-shadow: 0 22px 40px rgba(2, 15, 12, 0.34);
+}
+
 .glow-ring {
   position: relative;
   isolation: isolate;
@@ -548,37 +574,50 @@ h6 {
 }
 
 @media (max-width: 768px) {
-  .atelier-mosaic-page [id] {
-    scroll-margin-top: 5.5rem;
+  /* Reduce motion and heavy effects for low-end mobile devices */
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+    will-change: auto !important;
   }
 
-  .atelier-hero-shell,
-  .atelier-section-shell,
-  .atelier-mosaic-page #contact {
-    padding-left: 20px !important;
-    padding-right: 20px !important;
+  .homepage-hero .premium-orb {
+    display: none;
   }
 
-  .atelier-hero-shell {
-    padding-top: 18px !important;
-    padding-bottom: 72px !important;
+  .hero-visual-shell {
+    backdrop-filter: none !important;
+    background: linear-gradient(180deg, rgba(8, 39, 33, 0.94), rgba(6, 35, 29, 0.98)) !important;
   }
 
-  .atelier-header {
-    align-items: flex-start;
-    gap: 0.9rem;
-    padding-bottom: 1rem;
+  .hero-visual-image-wrap {
+    transform: none !important;
   }
 
-  .atelier-header-brand {
-    font-size: 0.82rem;
-    letter-spacing: 0.28em;
+  .hero-visual-overlay {
+    display: none;
   }
 
-  .atelier-header-admin {
-    padding: 0.78rem 1rem;
-    font-size: 0.82rem;
-    line-height: 1;
+  .homepage-stage::before,
+  .homepage-stage::after,
+  .homepage-hero::before {
+    animation: none !important;
+  }
+
+  .homepage-stage .premium-card,
+  .homepage-stage .premium-pill,
+  .homepage-stage .marketing-note {
+    backdrop-filter: none !important;
+  }
+
+  .hero-visual-chip {
+    padding: 0.22rem 0.65rem;
+    box-shadow: 0 6px 16px rgba(2, 15, 12, 0.22);
+  }
+
+  .hero-visual-card {
+    box-shadow: 0 16px 30px rgba(2, 15, 12, 0.28);
   }
 
   .atelier-mobile-nav {
