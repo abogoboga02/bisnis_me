@@ -85,6 +85,7 @@ export default function RootLayout({
         className={`${bodyFont.variable} ${displayFont.variable}`}
       >
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );
