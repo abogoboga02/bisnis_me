@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users (
   password_hash TEXT NOT NULL,
   name VARCHAR(120) NOT NULL,
   role VARCHAR(20) NOT NULL DEFAULT 'admin',
+  ai_credits_tenths INTEGER DEFAULT 30,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

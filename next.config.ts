@@ -1,6 +1,17 @@
 import type { NextConfig } from "next";
 
+const supabaseRemotePatterns = [
+  {
+    protocol: "https" as const,
+    hostname: "**.supabase.co",
+    pathname: "/storage/v1/object/public/**",
+  },
+];
+
 const nextConfig: NextConfig = {
+  images: {
+    remotePatterns: supabaseRemotePatterns,
+  },
   async headers() {
     const scriptSrc = ["'self'", "'unsafe-inline'"];
 

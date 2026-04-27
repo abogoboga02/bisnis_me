@@ -45,6 +45,42 @@ export function createRouteError(status: number, message: string) {
   return error;
 }
 
+function addAllowedOrigin(allowedOrigins: Set<string>, candidate: string | null | undefined) {
+  if (!candidate) {
+    return;
+  }
+
+  try {
+    allowedOrigins.add(new URL(candidate).origin);
+  } catch {
+    // Ignore invalid origin candidates.
+  }
+}
+
+function getForwardedHeaderValue(value: string | null) {
+  return value?.split(",")[0]?.trim() || null;
+}
+
+function getRequestHostOrigin(request: Request) {
+  const forwardedHost = getForwardedHeaderValue(request.headers.get("x-forwarded-host"));
+  const host = request.headers.get("host")?.trim() || null;
+  const hostname = forwardedHost || host;
+
+  if (!hostname) {
+    return null;
+  }
+
+  const forwardedProto = getForwardedHeaderValue(request.headers.get("x-forwarded-proto"));
+
+  try {
+    const requestUrl = new URL(request.url);
+    const protocol = (forwardedProto || requestUrl.protocol).replace(/:$/, "");
+    return `${protocol}://${hostname}`;
+  } catch {
+    return null;
+  }
+}
+
 function applyCommonHeaders(response: NextResponse) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -89,22 +125,13 @@ export function handleRouteError(error: unknown, fallbackMessage: string) {
 function getAllowedOrigins(request: Request) {
   const allowedOrigins = new Set<string>();
 
-  try {
-    allowedOrigins.add(new URL(request.url).origin);
-  } catch {
-    // Ignore malformed request URLs and rely on explicit env origins.
-  }
+  addAllowedOrigin(allowedOrigins, request.url);
+
+  // Prefer the public-facing host so LAN and reverse-proxy access still passes origin checks.
+  addAllowedOrigin(allowedOrigins, getRequestHostOrigin(request));
 
   for (const candidate of [process.env.NEXT_PUBLIC_SITE_URL, process.env.APP_ORIGIN]) {
-    if (!candidate) {
-      continue;
-    }
-
-    try {
-      allowedOrigins.add(new URL(candidate).origin);
-    } catch {
-      // Ignore invalid env values.
-    }
+    addAllowedOrigin(allowedOrigins, candidate);
   }
 
   return allowedOrigins;

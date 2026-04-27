@@ -1,6 +1,17 @@
 import "server-only";
 
-import type { AdminIdentity, AdminRole, Business, GalleryItem, ManagedUser, Service, Template, Testimonial } from "@/lib/types";
+import { DEFAULT_ADMIN_AI_CREDITS_TENTHS } from "@/lib/ai-business-content";
+import type {
+  AdminAiQuota,
+  AdminIdentity,
+  AdminRole,
+  Business,
+  GalleryItem,
+  ManagedUser,
+  Service,
+  Template,
+  Testimonial,
+} from "@/lib/types";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import { applyTemplateDefaults, getTemplateFormConfig } from "@/lib/template-form-config";
@@ -88,6 +99,7 @@ type UserRow = {
   password_hash: string;
   name: string;
   role: AdminRole | null;
+  ai_credits_tenths?: number | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -103,6 +115,7 @@ type CreateAdminUserPayload = {
   password?: unknown;
   role?: unknown;
   businessId?: unknown;
+  aiCreditsTenths?: unknown;
 };
 
 type BusinessPayload = Partial<Business>;
@@ -177,6 +190,10 @@ function normalizeSupabaseErrorMessage(message: string) {
     return "Schema Supabase belum aktif untuk API. Tambahkan schema bisnis_me ke Exposed schemas di Supabase.";
   }
 
+  if (message.includes("ai_credits_tenths")) {
+    return "Kolom token AI belum tersedia. Jalankan database/supabase-ai-token-upgrade.sql di Supabase SQL Editor.";
+  }
+
   if (
     (message.includes("column") && message.includes("does not exist")) ||
     (message.includes("relation") && message.includes("does not exist"))
@@ -249,6 +266,29 @@ function normalizeOptionalBusinessId(value: unknown) {
   return null;
 }
 
+function normalizeOptionalCreditTenths(value: unknown) {
+  if (typeof value === "number" && Number.isInteger(value) && value >= 0) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed >= 0) {
+      return parsed;
+    }
+  }
+
+  return DEFAULT_ADMIN_AI_CREDITS_TENTHS;
+}
+
+function resolveAiCreditsTenths(row: Pick<UserRow, "role" | "ai_credits_tenths">) {
+  if (row.role === "owner") {
+    return null;
+  }
+
+  return row.ai_credits_tenths ?? DEFAULT_ADMIN_AI_CREDITS_TENTHS;
+}
+
 function groupRowsByBusinessId<Row extends { business_id: number }>(rows: Row[] | null) {
   const grouped = new Map<number, Row[]>();
 
@@ -317,6 +357,7 @@ function mapManagedUserRow(row: UserRow, businessIds: number[]): ManagedUser {
     name: row.name,
     role: row.role === "owner" ? "owner" : "admin",
     businessIds,
+    aiCreditsTenths: resolveAiCreditsTenths(row),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -564,6 +605,94 @@ async function requireOwner(admin: AdminIdentity) {
   }
 }
 
+async function getUserRowById(userId: number) {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("users")
+    .select("id, email, password_hash, name, role, ai_credits_tenths, created_at, updated_at")
+    .eq("id", userId)
+    .maybeSingle();
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  return (data as UserRow | null) ?? null;
+}
+
+export async function getAdminAiQuota(admin: AdminIdentity): Promise<AdminAiQuota> {
+  if (admin.role === "owner") {
+    return {
+      remainingTenths: null,
+      unlimited: true,
+    };
+  }
+
+  const user = await getUserRowById(admin.id);
+
+  if (!user) {
+    throw createHttpError(404, "User admin tidak ditemukan.");
+  }
+
+  return {
+    remainingTenths: resolveAiCreditsTenths(user),
+    unlimited: false,
+  };
+}
+
+export async function consumeAdminAiCredits(admin: AdminIdentity, costTenths: number): Promise<AdminAiQuota> {
+  if (admin.role === "owner") {
+    return {
+      remainingTenths: null,
+      unlimited: true,
+    };
+  }
+
+  if (!Number.isInteger(costTenths) || costTenths <= 0) {
+    throw createHttpError(400, "Biaya token AI tidak valid.");
+  }
+
+  const user = await getUserRowById(admin.id);
+  if (!user) {
+    throw createHttpError(404, "User admin tidak ditemukan.");
+  }
+
+  const remainingTenths = resolveAiCreditsTenths(user);
+
+  if (remainingTenths === null) {
+    return {
+      remainingTenths: null,
+      unlimited: true,
+    };
+  }
+
+  if (remainingTenths < costTenths) {
+    throw createHttpError(
+      403,
+      "Token AI Anda tidak mencukupi. Hubungi admin untuk menambah token sebelum generate lagi.",
+    );
+  }
+
+  const nextCredits = remainingTenths - costTenths;
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase
+    .from("users")
+    .update({
+      ai_credits_tenths: nextCredits,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", admin.id);
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  return {
+    remainingTenths: nextCredits,
+    unlimited: false,
+  };
+}
+
 async function listAllUserAccessRows() {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
@@ -597,6 +726,7 @@ function validateCreateAdminUserPayload(payload: {
   password: string;
   role: AdminRole;
   businessId: number | null;
+  aiCreditsTenths: number;
 }) {
   if (!payload.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
     throw createHttpError(400, "Email user wajib valid.");
@@ -616,6 +746,10 @@ function validateCreateAdminUserPayload(payload: {
 
   if (payload.role === "owner" && payload.businessId) {
     throw createHttpError(400, "Owner tidak perlu dihubungkan ke bisnis tertentu.");
+  }
+
+  if (payload.role === "admin" && (!Number.isInteger(payload.aiCreditsTenths) || payload.aiCreditsTenths < 0)) {
+    throw createHttpError(400, "Token AI user harus berupa angka bulat nol atau lebih.");
   }
 }
 
@@ -823,35 +957,8 @@ async function replaceBusinessRelations(businessId: number, payload: NormalizedB
 }
 
 export async function listTemplatesFromDatabase(admin?: AdminIdentity) {
-  if (!admin || admin.role === "owner") {
-    const rows = await fetchTemplateRows();
-    return rows.map(mapTemplateRow);
-  }
-
-  const accessibleBusinessIds = await getAccessibleBusinessIds(admin);
-  if (!accessibleBusinessIds || accessibleBusinessIds.length === 0) {
-    const rows = await fetchTemplateRows();
-    return rows.map(mapTemplateRow);
-  }
-
-  const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase
-    .from("businesses")
-    .select("template_id")
-    .in("id", accessibleBusinessIds);
-
-  if (error) {
-    throwSupabaseError(500, error.message);
-  }
-
-  const templateIds = [
-    ...new Set(
-      ((data as Array<{ template_id: number | null }> | null) ?? [])
-        .map((item) => item.template_id)
-        .filter((value): value is number => Boolean(value)),
-    ),
-  ];
-  const rows = await fetchTemplateRows(templateIds);
+  void admin;
+  const rows = await fetchTemplateRows();
   return rows.map(mapTemplateRow);
 }
 
@@ -911,7 +1018,7 @@ export async function authenticateAdmin(email: unknown, password: unknown): Prom
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase
     .from("users")
-    .select("id, email, password_hash, name, role")
+    .select("id, email, password_hash, name, role, ai_credits_tenths")
     .eq("email", normalizedEmail)
     .maybeSingle();
 
@@ -943,7 +1050,7 @@ export async function listManagedUsersFromDatabase(admin: AdminIdentity): Promis
   const [{ data: usersData, error: usersError }, accessRows] = await Promise.all([
     supabase
       .from("users")
-      .select("id, email, password_hash, name, role, created_at, updated_at")
+      .select("id, email, password_hash, name, role, ai_credits_tenths, created_at, updated_at")
       .order("id", { ascending: true }),
     listAllUserAccessRows(),
   ]);
@@ -965,6 +1072,7 @@ export async function createManagedUserRecord(payload: CreateAdminUserPayload, a
     password: typeof payload.password === "string" ? payload.password : "",
     role: payload.role === "owner" ? "owner" : "admin",
     businessId: normalizeOptionalBusinessId(payload.businessId),
+    aiCreditsTenths: normalizeOptionalCreditTenths(payload.aiCreditsTenths),
   } as const;
 
   validateCreateAdminUserPayload(normalized);
@@ -981,10 +1089,11 @@ export async function createManagedUserRecord(payload: CreateAdminUserPayload, a
       password_hash: hashPassword(normalized.password),
       name: normalized.name,
       role: normalized.role,
+      ai_credits_tenths: normalized.role === "admin" ? normalized.aiCreditsTenths : null,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
-    .select("id, email, password_hash, name, role, created_at, updated_at")
+    .select("id, email, password_hash, name, role, ai_credits_tenths, created_at, updated_at")
     .single();
 
   if (error || !data) {
@@ -1008,6 +1117,53 @@ export async function createManagedUserRecord(payload: CreateAdminUserPayload, a
   }
 
   return mapManagedUserRow(data as UserRow, normalized.role === "admin" && normalized.businessId ? [normalized.businessId] : []);
+}
+
+export async function topUpManagedUserAiCredits(
+  admin: AdminIdentity,
+  userId: number,
+  deltaTenths: number,
+): Promise<ManagedUser> {
+  await requireOwner(admin);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw createHttpError(400, "User ID tidak valid.");
+  }
+
+  if (!Number.isInteger(deltaTenths) || deltaTenths <= 0) {
+    throw createHttpError(400, "Jumlah token tambahan tidak valid.");
+  }
+
+  const user = await getUserRowById(userId);
+
+  if (!user) {
+    throw createHttpError(404, "User tidak ditemukan.");
+  }
+
+  if (user.role !== "admin") {
+    throw createHttpError(400, "Token AI hanya bisa ditambahkan ke user admin biasa.");
+  }
+
+  const nextCredits = (resolveAiCreditsTenths(user) ?? DEFAULT_ADMIN_AI_CREDITS_TENTHS) + deltaTenths;
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("users")
+    .update({
+      ai_credits_tenths: nextCredits,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", userId)
+    .select("id, email, password_hash, name, role, ai_credits_tenths, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    throw createHttpError(500, normalizeSupabaseErrorMessage(error?.message ?? "Gagal menambah token AI user."));
+  }
+
+  const accessRows = await listAllUserAccessRows();
+  const businessIdsByUserId = groupBusinessIdsByUserId(accessRows);
+
+  return mapManagedUserRow(data as UserRow, businessIdsByUserId.get(userId) ?? []);
 }
 
 export async function createBusinessRecord(payload: BusinessPayload, admin: AdminIdentity) {

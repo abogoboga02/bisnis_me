@@ -255,16 +255,30 @@ export function Section({
   title,
   eyebrow,
   description,
+  actions,
   children,
   className = "",
 }: {
   title: string;
   eyebrow?: string;
   description?: string;
+  actions?: React.ReactNode;
   children: React.ReactNode;
   className?: string;
 }) {
-  return <section className={`rounded-[1.75rem] border border-white/10 bg-white/5 p-5 ${className}`}><p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">{eyebrow}</p><h3 className="mt-3 text-xl font-semibold text-white">{title}</h3>{description ? <p className="mt-2 text-sm leading-7 text-slate-400">{description}</p> : null}<div className="mt-4">{children}</div></section>;
+  return (
+    <section className={`rounded-[1.75rem] border border-white/10 bg-white/5 p-5 ${className}`}>
+      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-cyan-200/70">{eyebrow}</p>
+          <h3 className="mt-3 text-xl font-semibold text-white">{title}</h3>
+          {description ? <p className="mt-2 text-sm leading-7 text-slate-400">{description}</p> : null}
+        </div>
+        {actions ? <div className="shrink-0">{actions}</div> : null}
+      </div>
+      <div className="mt-4">{children}</div>
+    </section>
+  );
 }
 
 export function InfoCard({ label, title, description }: { label: string; title: string; description: string }) {

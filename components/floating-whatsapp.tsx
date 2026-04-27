@@ -1,21 +1,12 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
 import { MessageCircle } from "lucide-react";
 import { buildWhatsAppHref } from "@/lib/contact-utils";
+import { usePrefersReducedMotion } from "@/lib/use-prefers-reduced-motion";
 
 export function FloatingWhatsApp({ whatsapp }: { whatsapp: string }) {
-  const [reduceMotion, setReduceMotion] = useState(false);
-
-  useEffect(() => {
-    const query = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(query.matches);
-
-    const listener = (event: MediaQueryListEvent) => setReduceMotion(event.matches);
-    query.addEventListener("change", listener);
-    return () => query.removeEventListener("change", listener);
-  }, []);
+  const reduceMotion = usePrefersReducedMotion();
 
   if (!whatsapp) {
     return null;

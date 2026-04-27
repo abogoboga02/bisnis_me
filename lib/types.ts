@@ -88,12 +88,18 @@ export type AdminIdentity = {
   role: AdminRole;
 };
 
+export type AdminAiQuota = {
+  remainingTenths: number | null;
+  unlimited: boolean;
+};
+
 export type ManagedUser = {
   id: number;
   email: string;
   name: string;
   role: AdminRole;
   businessIds: number[];
+  aiCreditsTenths: number | null;
   createdAt?: string;
   updatedAt?: string;
 };

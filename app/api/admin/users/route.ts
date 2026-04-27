@@ -1,4 +1,4 @@
-import { createManagedUserRecord, listManagedUsersFromDatabase } from "@/lib/business-store";
+import { createManagedUserRecord, listManagedUsersFromDatabase, topUpManagedUserAiCredits } from "@/lib/business-store";
 import {
   assertJsonRequest,
   assertRateLimit,
@@ -34,5 +34,26 @@ export async function POST(request: Request) {
     return jsonResponse({ data: user }, { noStore: true });
   } catch (error) {
     return handleRouteError(error, "Gagal membuat user baru.");
+  }
+}
+
+export async function PATCH(request: Request) {
+  try {
+    assertSameOrigin(request);
+    assertJsonRequest(request);
+    assertRateLimit(request, {
+      namespace: "admin-users-topup",
+      max: 20,
+      windowMs: 10 * 60 * 1000,
+    });
+
+    const session = await requireAdminApiSession();
+    const body = (await request.json()) as { userId?: unknown; deltaTenths?: unknown };
+    const userId = typeof body.userId === "number" ? body.userId : Number(body.userId);
+    const deltaTenths = typeof body.deltaTenths === "number" ? body.deltaTenths : Number(body.deltaTenths);
+    const user = await topUpManagedUserAiCredits(session, userId, deltaTenths);
+    return jsonResponse({ data: user }, { noStore: true });
+  } catch (error) {
+    return handleRouteError(error, "Gagal menambah token AI user.");
   }
 }

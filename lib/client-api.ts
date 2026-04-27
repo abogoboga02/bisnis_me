@@ -1,11 +1,16 @@
 "use client";
 
+import type {
+  GenerateAiBusinessContentPayload,
+  GenerateAiBusinessContentResponse,
+} from "@/lib/ai-business-content";
 import type { AdminIdentity, Business, ManagedUser } from "@/lib/types";
 
 const API_BASE_PATH = "/api/business";
 const ADMIN_LOGIN_PATH = "/api/admin/login";
 const ADMIN_LOGOUT_PATH = "/api/admin/logout";
 const ADMIN_USERS_PATH = "/api/admin/users";
+const ADMIN_AI_BUSINESS_CONTENT_PATH = "/api/admin/ai/business-content";
 
 async function parseErrorMessage(response: Response, fallbackMessage: string) {
   try {
@@ -134,6 +139,7 @@ type CreateManagedUserPayload = {
   password: string;
   role: "owner" | "admin";
   businessId: number | null;
+  aiCreditsTenths: number;
 };
 
 export async function createManagedUser(payload: CreateManagedUserPayload) {
@@ -154,5 +160,47 @@ export async function createManagedUser(payload: CreateManagedUserPayload) {
   }
 
   const data = (await response.json()) as { data: ManagedUser };
+  return data.data;
+}
+
+export async function topUpManagedUserAiCredits(userId: number, deltaTenths: number) {
+  let response: Response;
+  try {
+    response = await fetch(ADMIN_USERS_PATH, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userId, deltaTenths }),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the user management API");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to top up AI credits"));
+  }
+
+  const data = (await response.json()) as { data: ManagedUser };
+  return data.data;
+}
+
+export async function generateAiBusinessContent(payload: GenerateAiBusinessContentPayload) {
+  let response: Response;
+  try {
+    response = await fetch(ADMIN_AI_BUSINESS_CONTENT_PATH, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the AI content API");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to generate AI content"));
+  }
+
+  const data = (await response.json()) as { data: GenerateAiBusinessContentResponse };
   return data.data;
 }

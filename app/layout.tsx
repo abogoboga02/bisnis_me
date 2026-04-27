@@ -1,15 +1,5 @@
 import type { Metadata } from "next";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import {
-  Archivo_Black,
-  Bricolage_Grotesque,
-  Chakra_Petch,
-  Cormorant_Garamond,
-  DM_Serif_Display,
-  Inter,
-  Space_Grotesk,
-  Space_Mono,
-} from "next/font/google";
+import { DM_Serif_Display, Inter } from "next/font/google";
 import "./globals.css";
 
 const bodyFont = Inter({
@@ -81,9 +71,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${bodyFont.variable} ${displayFont.variable}`}
-      >
+      <body suppressHydrationWarning className={`${bodyFont.variable} ${displayFont.variable}`}>
         {children}
       </body>
     </html>
