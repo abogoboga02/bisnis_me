@@ -49,10 +49,38 @@ type AnthropicMessageResponse = {
   error?: { message?: string; type?: string };
 };
 
+type KieCreateTaskResponse = {
+  code?: number;
+  msg?: string;
+  data?: {
+    taskId?: string;
+  } | null;
+};
+
+type KieTaskDetailResponse = {
+  code?: number;
+  msg?: string;
+  data?: {
+    state?: string;
+    resultJson?: string;
+    failMsg?: string;
+  } | null;
+};
+
+type GeneratedImageFormat = "png" | "jpeg" | "webp";
+type KieAspectRatio = "1:1" | "16:9";
+type KieResolution = "1K" | "2K";
+
 type ImageProviderConfig =
   | {
       provider: "replicate";
       client: Replicate;
+      model: string;
+    }
+  | {
+      provider: "kie";
+      apiKey: string;
+      baseURL: string;
       model: string;
     }
   | {
@@ -64,6 +92,8 @@ type ImageProviderConfig =
 let cachedOpenAiCompatibleClient: OpenAI | null = null;
 let cachedImageClient: OpenAI | null = null;
 let cachedReplicateClient: Replicate | null = null;
+const KIE_POLL_INTERVAL_MS = 3_000;
+const KIE_POLL_TIMEOUT_MS = 5 * 60 * 1_000;
 
 function cleanText(value: unknown) {
   return typeof value === "string" ? value.trim() : "";
@@ -117,7 +147,26 @@ function getOpenAICompatibleTextModel() {
   return cleanText(process.env.SUMOPOD_MODEL) || "qwen3.6-flash";
 }
 
+function getKieApiBaseUrl() {
+  return (cleanText(process.env.KIE_API_BASE_URL) || "https://api.kie.ai").replace(/\/+$/, "");
+}
+
+function getKieImageModel() {
+  return cleanText(process.env.KIE_IMAGE_MODEL) || "gpt-image-2-text-to-image";
+}
+
 function getImageProviderConfig() {
+  const kieApiKey = cleanText(process.env.KIE_API_KEY);
+
+  if (kieApiKey) {
+    return {
+      provider: "kie" as const,
+      apiKey: kieApiKey,
+      baseURL: getKieApiBaseUrl(),
+      model: getKieImageModel(),
+    };
+  }
+
   const replicateToken = cleanText(process.env.REPLICATE_API_TOKEN);
   const replicateModel = cleanText(process.env.REPLICATE_IMAGE_MODEL) || cleanText(process.env.IMAGE_MODEL);
 
@@ -225,7 +274,7 @@ async function ensureBucket() {
   return bucketName;
 }
 
-function getExtensionFromFormat(format: "png" | "jpeg" | "webp") {
+function getExtensionFromFormat(format: GeneratedImageFormat) {
   switch (format) {
     case "jpeg":
       return ".jpg";
@@ -236,7 +285,7 @@ function getExtensionFromFormat(format: "png" | "jpeg" | "webp") {
   }
 }
 
-function getMimeFromFormat(format: "png" | "jpeg" | "webp") {
+function getMimeFromFormat(format: GeneratedImageFormat) {
   switch (format) {
     case "jpeg":
       return "image/jpeg";
@@ -247,7 +296,7 @@ function getMimeFromFormat(format: "png" | "jpeg" | "webp") {
   }
 }
 
-async function persistGeneratedImage(buffer: Buffer, format: "png" | "jpeg" | "webp"): Promise<PersistedImage> {
+async function persistGeneratedImage(buffer: Buffer, format: GeneratedImageFormat): Promise<PersistedImage> {
   const extension = getExtensionFromFormat(format);
   const fileName = `${Date.now()}-${crypto.randomUUID()}${extension}`;
 
@@ -272,6 +321,26 @@ async function persistGeneratedImage(buffer: Buffer, format: "png" | "jpeg" | "w
   await fs.mkdir(uploadDir, { recursive: true });
   await fs.writeFile(path.join(uploadDir, fileName), buffer);
   return { path: `/uploads/businesses/${fileName}` };
+}
+
+function detectImageFormat(buffer: Buffer, fallback: GeneratedImageFormat = "jpeg"): GeneratedImageFormat {
+  if (buffer.length >= 4 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47) {
+    return "png";
+  }
+
+  if (buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
+    return "jpeg";
+  }
+
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+    buffer.subarray(8, 12).toString("ascii") === "WEBP"
+  ) {
+    return "webp";
+  }
+
+  return fallback;
 }
 
 function summarizeCurrentDraft(draft?: Partial<Business>) {
@@ -700,6 +769,152 @@ async function runJsonChat(systemPrompt: string, userPrompt: string) {
   return runOpenAICompatibleJsonChat(systemPrompt, userPrompt);
 }
 
+async function parseJsonResponse<T>(response: Response) {
+  try {
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+function getKieImageSettings(size: "1024x1024" | "1536x1024") {
+  if (size === "1536x1024") {
+    return {
+      aspectRatio: "16:9" as KieAspectRatio,
+      resolution: "2K" as KieResolution,
+    };
+  }
+
+  return {
+    aspectRatio: "1:1" as KieAspectRatio,
+    resolution: "1K" as KieResolution,
+  };
+}
+
+function buildKieErrorMessage(message: string, fallback: string) {
+  const normalized = cleanText(message);
+  return normalized ? `Kie API: ${normalized}` : fallback;
+}
+
+async function createKieImageTask(
+  imageClientConfig: Extract<ImageProviderConfig, { provider: "kie" }>,
+  prompt: string,
+  size: "1024x1024" | "1536x1024",
+) {
+  const settings = getKieImageSettings(size);
+  const response = await fetch(`${imageClientConfig.baseURL}/api/v1/jobs/createTask`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${imageClientConfig.apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: imageClientConfig.model,
+      input: {
+        prompt,
+        aspect_ratio: settings.aspectRatio,
+        resolution: settings.resolution,
+      },
+    }),
+    cache: "no-store",
+  });
+
+  const payload = await parseJsonResponse<KieCreateTaskResponse>(response);
+
+  if (!response.ok || payload?.code !== 200 || !payload.data?.taskId) {
+    throw new Error(
+      buildKieErrorMessage(payload?.msg || "", `Kie API gagal membuat task gambar (${response.status}).`),
+    );
+  }
+
+  return payload.data.taskId;
+}
+
+async function getKieTaskDetail(
+  imageClientConfig: Extract<ImageProviderConfig, { provider: "kie" }>,
+  taskId: string,
+) {
+  const url = new URL("/api/v1/jobs/recordInfo", imageClientConfig.baseURL);
+  url.searchParams.set("taskId", taskId);
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${imageClientConfig.apiKey}`,
+    },
+    cache: "no-store",
+  });
+
+  const payload = await parseJsonResponse<KieTaskDetailResponse>(response);
+
+  if (!response.ok || payload?.code !== 200 || !payload.data) {
+    throw new Error(
+      buildKieErrorMessage(payload?.msg || "", `Kie API gagal membaca status task gambar (${response.status}).`),
+    );
+  }
+
+  return payload.data;
+}
+
+function extractKieResultUrl(resultJson: string | undefined) {
+  const normalized = cleanText(resultJson);
+
+  if (!normalized) {
+    return "";
+  }
+
+  try {
+    const parsed = JSON.parse(normalized) as { resultUrls?: unknown };
+    const firstUrl = Array.isArray(parsed.resultUrls)
+      ? parsed.resultUrls.find((value) => typeof value === "string" && value.trim())
+      : null;
+    return typeof firstUrl === "string" ? firstUrl.trim() : "";
+  } catch {
+    return "";
+  }
+}
+
+async function waitForKieImageUrl(
+  imageClientConfig: Extract<ImageProviderConfig, { provider: "kie" }>,
+  taskId: string,
+) {
+  const deadline = Date.now() + KIE_POLL_TIMEOUT_MS;
+
+  while (Date.now() < deadline) {
+    const detail = await getKieTaskDetail(imageClientConfig, taskId);
+    const state = cleanText(detail.state).toLowerCase();
+
+    if (state === "success") {
+      const resultUrl = extractKieResultUrl(detail.resultJson);
+
+      if (!resultUrl) {
+        throw new Error("Kie API menyelesaikan task tanpa URL gambar.");
+      }
+
+      return resultUrl;
+    }
+
+    if (state === "fail") {
+      throw new Error(buildKieErrorMessage(detail.failMsg || "", "Kie API gagal membuat gambar."));
+    }
+
+    await wait(KIE_POLL_INTERVAL_MS);
+  }
+
+  throw new Error("Kie API melebihi batas waktu generate gambar.");
+}
+
+async function downloadGeneratedImage(rawUrl: string, providerLabel: string) {
+  const imageResponse = await fetch(rawUrl, {
+    cache: "no-store",
+  });
+
+  if (!imageResponse.ok) {
+    throw new Error(`Gagal mengunduh hasil gambar ${providerLabel}: ${imageResponse.status}`);
+  }
+
+  return Buffer.from(await imageResponse.arrayBuffer());
+}
+
 async function generateImageAsset(
   imageClientConfig: ImageProviderConfig,
   prompt: string,
@@ -737,16 +952,16 @@ async function generateImageAsset(
       throw new Error("Replicate tidak mengembalikan URL gambar.");
     }
 
-    const imageResponse = await fetch(rawUrl, {
-      cache: "no-store",
-    });
-
-    if (!imageResponse.ok) {
-      throw new Error(`Gagal mengunduh hasil gambar Replicate: ${imageResponse.status}`);
-    }
-
-    const buffer = Buffer.from(await imageResponse.arrayBuffer());
+    const buffer = await downloadGeneratedImage(rawUrl, "Replicate");
     const persisted = await persistGeneratedImage(buffer, "webp");
+    return persisted.path;
+  }
+
+  if (imageClientConfig.provider === "kie") {
+    const taskId = await createKieImageTask(imageClientConfig, prompt, size);
+    const rawUrl = await waitForKieImageUrl(imageClientConfig, taskId);
+    const buffer = await downloadGeneratedImage(rawUrl, "Kie");
+    const persisted = await persistGeneratedImage(buffer, detectImageFormat(buffer, "png"));
     return persisted.path;
   }
 
@@ -772,10 +987,10 @@ async function generateImageAsset(
 
 function getImageProviderUnavailableMessage() {
   if (getTextProvider() === "anthropic") {
-    return `${getAnthropicModel()} berhasil dipakai untuk generate teks, tetapi Claude API tidak menyediakan generate gambar. Tambahkan provider gambar terpisah melalui IMAGE_API_KEY, IMAGE_API_BASE_URL, dan IMAGE_MODEL, atau upload gambar manual.`;
+    return `${getAnthropicModel()} berhasil dipakai untuk generate teks, tetapi provider gambar belum dikonfigurasi. Tambahkan KIE_API_KEY untuk Kie GPT Image atau pakai provider legacy melalui REPLICATE_API_TOKEN + REPLICATE_IMAGE_MODEL / IMAGE_API_KEY + IMAGE_MODEL, atau upload gambar manual.`;
   }
 
-  return `Model teks ${getOpenAICompatibleTextModel()} sudah aktif, tetapi provider gambar belum dikonfigurasi. Tambahkan REPLICATE_API_TOKEN + REPLICATE_IMAGE_MODEL atau IMAGE_API_KEY + IMAGE_MODEL, atau upload gambar manual.`;
+  return `Model teks ${getOpenAICompatibleTextModel()} sudah aktif, tetapi provider gambar belum dikonfigurasi. Tambahkan KIE_API_KEY untuk Kie GPT Image atau pakai provider legacy melalui REPLICATE_API_TOKEN + REPLICATE_IMAGE_MODEL / IMAGE_API_KEY + IMAGE_MODEL, atau upload gambar manual.`;
 }
 
 function getErrorMessage(error: unknown) {
@@ -792,6 +1007,35 @@ function isReplicateAuthError(error: unknown) {
     message.includes("replicate") &&
     (message.includes("401") || message.includes("unauthenticated") || message.includes("authentication token"))
   );
+}
+
+function isKieAuthError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return message.includes("kie api") && (message.includes("401") || message.includes("unauthorized"));
+}
+
+function isOpenAiCompatibleImageAuthError(error: unknown) {
+  const message = getErrorMessage(error).toLowerCase();
+  return (
+    (message.includes("401") || message.includes("unauthorized") || message.includes("incorrect api key")) &&
+    (message.includes("openai") || message.includes("api key"))
+  );
+}
+
+function isImageProviderAuthError(error: unknown) {
+  return isReplicateAuthError(error) || isKieAuthError(error) || isOpenAiCompatibleImageAuthError(error);
+}
+
+function getImageProviderAuthReviewNote(imageClientConfig: ImageProviderConfig) {
+  if (imageClientConfig.provider === "kie") {
+    return "Kie API menolak autentikasi generate gambar. Perbarui KIE_API_KEY dengan key yang masih aktif, lalu coba generate ulang.";
+  }
+
+  if (imageClientConfig.provider === "replicate") {
+    return "Replicate menolak autentikasi generate gambar. Perbarui REPLICATE_API_TOKEN dengan token baru yang masih aktif, lalu coba generate ulang.";
+  }
+
+  return "Provider gambar menolak autentikasi. Periksa IMAGE_API_KEY, IMAGE_API_BASE_URL, dan IMAGE_MODEL sebelum generate ulang.";
 }
 
 async function wait(ms: number) {
@@ -812,7 +1056,7 @@ async function generateImageWithRetry(
     } catch (error) {
       lastError = error;
 
-      if (isReplicateAuthError(error) || attempt === 2) {
+      if (isImageProviderAuthError(error) || attempt === 2) {
         break;
       }
 
@@ -853,7 +1097,7 @@ async function generateVisualAssets(
   } catch (error) {
     reviewNotes.push("Gambar hero AI belum berhasil dibuat. Anda masih bisa upload gambar manual bila diperlukan.");
 
-    if (isReplicateAuthError(error)) {
+    if (isImageProviderAuthError(error)) {
       authFailureDetected = true;
     }
   }
@@ -870,7 +1114,7 @@ async function generateVisualAssets(
       } catch (error) {
         failedGalleryCount += 1;
 
-        if (isReplicateAuthError(error)) {
+        if (isImageProviderAuthError(error)) {
           authFailureDetected = true;
           failedGalleryCount += content.galleryItems.length - index - 1;
           break;
@@ -882,9 +1126,7 @@ async function generateVisualAssets(
   }
 
   if (authFailureDetected) {
-    reviewNotes.push(
-      "Replicate menolak autentikasi generate gambar. Perbarui REPLICATE_API_TOKEN dengan token baru yang masih aktif, lalu coba generate ulang.",
-    );
+    reviewNotes.push(getImageProviderAuthReviewNote(imageClientConfig));
   } else if (failedGalleryCount > 0) {
     reviewNotes.push(`${failedGalleryCount} gambar galeri AI belum berhasil dibuat. Slot yang kosong masih bisa diisi manual.`);
   }

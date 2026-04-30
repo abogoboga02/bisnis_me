@@ -101,27 +101,32 @@ function getPreviewIdentity(template: Template) {
     "atelier-mosaic": {
       name: "Atelier Meridian",
       tagline: "Corporate geometric presence for brands that need a sharper, more executive first impression.",
-      description: "Atelier Mosaic kini diarahkan ke komposisi corporate yang tegas dengan blok geometris, kontras navy-merah, dan ritme presentasi yang lebih formal.",
+      description:
+        "Atelier Mosaic kini diarahkan ke komposisi corporate yang tegas dengan blok geometris, kontras navy-merah, dan ritme presentasi yang lebih formal.",
     },
     "signal-frame": {
       name: "Signal Works",
       tagline: "Swiss-grid company profile for businesses that want a sharper, more decisive digital presence.",
-      description: "Signal Frame menekan hirarki yang jelas, headline besar, grid geometris, dan penempatan CTA yang sangat lugas.",
+      description:
+        "Signal Frame menekan hirarki yang jelas, headline besar, grid geometris, dan penempatan CTA yang sangat lugas.",
     },
     "noir-grid": {
       name: "Noir Systems",
       tagline: "Dark modular template for operational, tech-forward, and high-control business brands.",
-      description: "Noir Grid menggabungkan terminal rhythm, modular proof blocks, dan palet gelap beraksen neon agar brand terasa tegas.",
+      description:
+        "Noir Grid menggabungkan terminal rhythm, modular proof blocks, dan palet gelap beraksen neon agar brand terasa tegas.",
     },
     "prism-riot": {
       name: "Prism Bureau",
       tagline: "Angular campaign page for bold launches, creative studios, and statement-driven brands.",
-      description: "Prism Riot dibuat untuk brand yang ingin terasa artistik, berani, dan sangat berbeda dari website template standar.",
+      description:
+        "Prism Riot dibuat untuk brand yang ingin terasa artistik, berani, dan sangat berbeda dari website template standar.",
     },
     "harbor-ledger": {
       name: "Harbor Advisory",
       tagline: "Blueprint-inspired corporate layout for consulting, logistics, and formal service brands.",
-      description: "Harbor Ledger memberi rasa presisi, kepercayaan, dan struktur bisnis yang matang melalui ritme layout yang lebih tenang.",
+      description:
+        "Harbor Ledger memberi rasa presisi, kepercayaan, dan struktur bisnis yang matang melalui ritme layout yang lebih tenang.",
     },
   };
 
@@ -151,11 +156,13 @@ export function buildTemplatePreviewBusiness(template: Template): Business {
     servicesTitle: "Services",
     servicesIntro: template.feature,
     testimonialsTitle: "Testimonials",
-    testimonialsIntro: "Potongan social proof untuk memperlihatkan cara template ini membawa brand terasa lebih terpercaya.",
+    testimonialsIntro:
+      "Potongan social proof untuk memperlihatkan cara template ini membawa brand terasa lebih terpercaya.",
     galleryTitle: "Gallery",
     galleryIntro: "Visual preview ini mensimulasikan ritme section yang akan dilihat calon pelanggan.",
     contactTitle: "Contact",
-    contactIntro: "Gunakan CTA utama, telepon, dan WhatsApp untuk menutup pengalaman dengan jalur tindakan yang jelas.",
+    contactIntro:
+      "Gunakan CTA utama, telepon, dan WhatsApp untuk menutup pengalaman dengan jalur tindakan yang jelas.",
     boardmemoLabel: "",
     boardmemoTitle: "",
     boardmemoBody: "",

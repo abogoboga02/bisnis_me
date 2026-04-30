@@ -1,4 +1,9 @@
-import { deleteBusinessRecord, updateBusinessRecord } from "@/lib/business-store";
+import { revalidateTag } from "next/cache";
+import {
+  deleteBusinessRecord,
+  PUBLIC_BUSINESS_SUMMARIES_TAG,
+  updateBusinessRecord,
+} from "@/lib/business-store";
 import {
   assertJsonRequest,
   assertRateLimit,
@@ -36,6 +41,7 @@ export async function PUT(request: Request, context: RouteContext) {
       throw createRouteError(404, "Business not found.");
     }
 
+    revalidateTag(PUBLIC_BUSINESS_SUMMARIES_TAG, "max");
     return jsonResponse({ data: business }, { noStore: true });
   } catch (error) {
     return handleRouteError(error, "Gagal memperbarui bisnis.");
@@ -64,6 +70,7 @@ export async function DELETE(request: Request, context: RouteContext) {
       throw createRouteError(404, "Business not found.");
     }
 
+    revalidateTag(PUBLIC_BUSINESS_SUMMARIES_TAG, "max");
     return new Response(null, {
       status: 204,
       headers: {

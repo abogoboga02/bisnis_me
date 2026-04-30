@@ -1,5 +1,6 @@
 import "server-only";
 
+import { unstable_cache } from "next/cache";
 import { DEFAULT_ADMIN_AI_CREDITS_TENTHS } from "@/lib/ai-business-content";
 import type {
   AdminAiQuota,
@@ -30,6 +31,20 @@ type TemplateRow = {
   preview_image: string | null;
   created_at: string;
   updated_at: string;
+};
+
+type PublicBusinessSummary = {
+  id: number;
+  slug: string;
+  name: string;
+  tagline: string;
+};
+
+type PublicBusinessSummaryRow = {
+  id: number;
+  slug: string;
+  name: string;
+  tagline: string | null;
 };
 
 type ServiceRow = {
@@ -118,6 +133,15 @@ type CreateAdminUserPayload = {
   aiCreditsTenths?: unknown;
 };
 
+type UpdateManagedUserPayload = {
+  email?: unknown;
+  name?: unknown;
+  currentPassword?: unknown;
+  newPassword?: unknown;
+  newPasswordConfirmation?: unknown;
+  aiCreditsTenths?: unknown;
+};
+
 type BusinessPayload = Partial<Business>;
 
 type AppError = Error & { status?: number };
@@ -178,6 +202,10 @@ const TEMPLATE_SELECT =
   "id, name, key, description, accent, category, category_label, fit, feature, preview_image, created_at, updated_at";
 const BUSINESS_SELECT =
   "id, slug, name, tagline, description, hero_label, hero_image, hero_cta_label, hero_cta_url, about_title, about_intro, services_title, services_intro, testimonials_title, testimonials_intro, gallery_title, gallery_intro, contact_title, contact_intro, boardmemo_label, boardmemo_title, boardmemo_body, phone, whatsapp, address, meta_title, meta_description, og_image, template_id, created_at, updated_at";
+const PUBLIC_BUSINESS_SUMMARY_SELECT = "id, slug, name, tagline";
+const PUBLIC_CATALOG_REVALIDATE_SECONDS = 60;
+export const PUBLIC_BUSINESS_SUMMARIES_TAG = "public-business-summaries";
+export const PUBLIC_TEMPLATES_TAG = "public-templates";
 
 function createHttpError(status: number, message: string) {
   const error = new Error(message) as AppError;
@@ -360,6 +388,15 @@ function mapManagedUserRow(row: UserRow, businessIds: number[]): ManagedUser {
     aiCreditsTenths: resolveAiCreditsTenths(row),
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+  };
+}
+
+function mapPublicBusinessSummaryRow(row: PublicBusinessSummaryRow): PublicBusinessSummary {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    tagline: row.tagline ?? "",
   };
 }
 
@@ -753,6 +790,46 @@ function validateCreateAdminUserPayload(payload: {
   }
 }
 
+function validateManagedUserUpdatePayload(payload: {
+  email: string;
+  name: string;
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirmation: string;
+  aiCreditsTenths: number | null;
+  role: AdminRole;
+}) {
+  if (!payload.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+    throw createHttpError(400, "Email user wajib valid.");
+  }
+
+  if (!payload.name) {
+    throw createHttpError(400, "Nama user wajib diisi.");
+  }
+
+  const wantsPasswordChange = Boolean(payload.currentPassword || payload.newPassword || payload.newPasswordConfirmation);
+
+  if (wantsPasswordChange) {
+    if (!payload.currentPassword) {
+      throw createHttpError(400, "Password lama wajib diisi untuk mengganti password.");
+    }
+
+    if (!payload.newPassword || payload.newPassword.length < 8) {
+      throw createHttpError(400, "Password baru minimal 8 karakter.");
+    }
+
+    if (payload.newPassword !== payload.newPasswordConfirmation) {
+      throw createHttpError(400, "Konfirmasi password baru harus sama.");
+    }
+  }
+
+  if (payload.role === "admin") {
+    if (!Number.isInteger(payload.aiCreditsTenths) || (payload.aiCreditsTenths ?? -1) < 0) {
+      throw createHttpError(400, "Token AI user harus berupa angka bulat nol atau lebih.");
+    }
+  }
+}
+
 async function assertBusinessExists(businessId: number) {
   const supabase = getSupabaseAdmin();
   const { data, error } = await supabase.from("businesses").select("id").eq("id", businessId).maybeSingle();
@@ -815,6 +892,20 @@ async function fetchBusinessRows(businessIds?: number[]) {
   }
 
   return (data as BusinessRow[] | null) ?? [];
+}
+
+async function fetchPublicBusinessSummaryRows() {
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("businesses")
+    .select(PUBLIC_BUSINESS_SUMMARY_SELECT)
+    .order("id", { ascending: true });
+
+  if (error) {
+    throwSupabaseError(500, error.message);
+  }
+
+  return (data as PublicBusinessSummaryRow[] | null) ?? [];
 }
 
 async function fetchRelatedCollections(businessIds: number[]): Promise<RelatedCollections> {
@@ -960,6 +1051,42 @@ export async function listTemplatesFromDatabase(admin?: AdminIdentity) {
   void admin;
   const rows = await fetchTemplateRows();
   return rows.map(mapTemplateRow);
+}
+
+const getCachedPublicTemplatesReader = unstable_cache(
+  async () => {
+    const rows = await fetchTemplateRows();
+    return rows.map(mapTemplateRow);
+  },
+  ["public-templates"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_TEMPLATES_TAG],
+  },
+);
+
+export async function getCachedPublicTemplates() {
+  return getCachedPublicTemplatesReader();
+}
+
+export async function listPublicBusinessSummariesFromDatabase() {
+  const rows = await fetchPublicBusinessSummaryRows();
+  return rows.map(mapPublicBusinessSummaryRow);
+}
+
+const getCachedPublicBusinessSummariesReader = unstable_cache(
+  async () => {
+    return listPublicBusinessSummariesFromDatabase();
+  },
+  ["public-business-summaries"],
+  {
+    revalidate: PUBLIC_CATALOG_REVALIDATE_SECONDS,
+    tags: [PUBLIC_BUSINESS_SUMMARIES_TAG],
+  },
+);
+
+export async function getCachedPublicBusinessSummaries() {
+  return getCachedPublicBusinessSummariesReader();
 }
 
 export async function listBusinessesFromDatabase(admin?: AdminIdentity) {
@@ -1164,6 +1291,115 @@ export async function topUpManagedUserAiCredits(
   const businessIdsByUserId = groupBusinessIdsByUserId(accessRows);
 
   return mapManagedUserRow(data as UserRow, businessIdsByUserId.get(userId) ?? []);
+}
+
+export async function updateManagedUserRecord(
+  userId: number,
+  payload: UpdateManagedUserPayload,
+  admin: AdminIdentity,
+): Promise<ManagedUser> {
+  await requireOwner(admin);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw createHttpError(400, "User ID tidak valid.");
+  }
+
+  const user = await getUserRowById(userId);
+
+  if (!user) {
+    throw createHttpError(404, "User tidak ditemukan.");
+  }
+
+  const normalized = {
+    email: normalizeEmail(payload.email),
+    name: cleanText(payload.name),
+    currentPassword: typeof payload.currentPassword === "string" ? payload.currentPassword : "",
+    newPassword: typeof payload.newPassword === "string" ? payload.newPassword : "",
+    newPasswordConfirmation:
+      typeof payload.newPasswordConfirmation === "string" ? payload.newPasswordConfirmation : "",
+    aiCreditsTenths: user.role === "admin" ? normalizeOptionalCreditTenths(payload.aiCreditsTenths) : null,
+    role: user.role === "owner" ? "owner" : "admin",
+  } as const;
+
+  validateManagedUserUpdatePayload(normalized);
+
+  if (normalized.newPassword && !verifyPassword(normalized.currentPassword, user.password_hash)) {
+    throw createHttpError(400, "Password lama tidak sesuai.");
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase
+    .from("users")
+    .update({
+      email: normalized.email,
+      name: normalized.name,
+      ai_credits_tenths: user.role === "admin" ? normalized.aiCreditsTenths : null,
+      updated_at: new Date().toISOString(),
+      ...(normalized.newPassword ? { password_hash: hashPassword(normalized.newPassword) } : {}),
+    })
+    .eq("id", userId)
+    .select("id, email, password_hash, name, role, ai_credits_tenths, created_at, updated_at")
+    .single();
+
+  if (error || !data) {
+    if (error?.code === "23505") {
+      throw createHttpError(409, "Email user sudah terdaftar.");
+    }
+
+    throw createHttpError(500, normalizeSupabaseErrorMessage(error?.message ?? "Gagal memperbarui user."));
+  }
+
+  const accessRows = await listAllUserAccessRows();
+  const businessIdsByUserId = groupBusinessIdsByUserId(accessRows);
+
+  return mapManagedUserRow(data as UserRow, businessIdsByUserId.get(userId) ?? []);
+}
+
+export async function deleteManagedUserRecord(userId: number, admin: AdminIdentity): Promise<void> {
+  await requireOwner(admin);
+
+  if (!Number.isInteger(userId) || userId <= 0) {
+    throw createHttpError(400, "User ID tidak valid.");
+  }
+
+  if (admin.id === userId) {
+    throw createHttpError(400, "Akun yang sedang dipakai tidak bisa dihapus.");
+  }
+
+  const user = await getUserRowById(userId);
+
+  if (!user) {
+    throw createHttpError(404, "User tidak ditemukan.");
+  }
+
+  if ((user.role === "owner" ? "owner" : "admin") === "owner") {
+    const supabase = getSupabaseAdmin();
+    const { count, error } = await supabase
+      .from("users")
+      .select("id", { count: "exact", head: true })
+      .eq("role", "owner");
+
+    if (error) {
+      throw createHttpError(500, normalizeSupabaseErrorMessage(error.message));
+    }
+
+    if ((count ?? 0) <= 1) {
+      throw createHttpError(400, "Owner terakhir tidak boleh dihapus.");
+    }
+  }
+
+  const supabase = getSupabaseAdmin();
+  const accessDelete = await supabase.from("user_business_access").delete().eq("user_id", userId);
+
+  if (accessDelete.error) {
+    throw createHttpError(500, normalizeSupabaseErrorMessage(accessDelete.error.message));
+  }
+
+  const userDelete = await supabase.from("users").delete().eq("id", userId);
+
+  if (userDelete.error) {
+    throw createHttpError(500, normalizeSupabaseErrorMessage(userDelete.error.message));
+  }
 }
 
 export async function createBusinessRecord(payload: BusinessPayload, admin: AdminIdentity) {

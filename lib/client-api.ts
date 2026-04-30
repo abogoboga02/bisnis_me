@@ -142,6 +142,15 @@ type CreateManagedUserPayload = {
   aiCreditsTenths: number;
 };
 
+type UpdateManagedUserPayload = {
+  email: string;
+  name: string;
+  currentPassword: string;
+  newPassword: string;
+  newPasswordConfirmation: string;
+  aiCreditsTenths: number | null;
+};
+
 export async function createManagedUser(payload: CreateManagedUserPayload) {
   let response: Response;
   try {
@@ -182,6 +191,43 @@ export async function topUpManagedUserAiCredits(userId: number, deltaTenths: num
 
   const data = (await response.json()) as { data: ManagedUser };
   return data.data;
+}
+
+export async function updateManagedUser(userId: number, payload: UpdateManagedUserPayload) {
+  let response: Response;
+  try {
+    response = await fetch(`${ADMIN_USERS_PATH}/${userId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the user management API");
+  }
+
+  if (!response.ok) {
+    throw new Error(await parseErrorMessage(response, "Failed to update user"));
+  }
+
+  const data = (await response.json()) as { data: ManagedUser };
+  return data.data;
+}
+
+export async function deleteManagedUser(userId: number) {
+  let response: Response;
+  try {
+    response = await fetch(`${ADMIN_USERS_PATH}/${userId}`, {
+      method: "DELETE",
+      credentials: "same-origin",
+    });
+  } catch {
+    throw new Error("Failed to reach the user management API");
+  }
+
+  if (!response.ok && response.status !== 204) {
+    throw new Error(await parseErrorMessage(response, "Failed to delete user"));
+  }
 }
 
 export async function generateAiBusinessContent(payload: GenerateAiBusinessContentPayload) {

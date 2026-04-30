@@ -1,4 +1,5 @@
-import { createBusinessRecord } from "@/lib/business-store";
+import { revalidateTag } from "next/cache";
+import { createBusinessRecord, PUBLIC_BUSINESS_SUMMARIES_TAG } from "@/lib/business-store";
 import {
   assertJsonRequest,
   assertRateLimit,
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const session = await requireAdminApiSession();
     const body = await request.json();
     const business = await createBusinessRecord(body, session);
+    revalidateTag(PUBLIC_BUSINESS_SUMMARIES_TAG, "max");
     return jsonResponse({ data: business }, { noStore: true });
   } catch (error) {
     return handleRouteError(error, "Gagal membuat bisnis.");

@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { MarketingNav } from "@/components/marketing-nav";
-import { listBusinessesFromDatabase } from "@/lib/business-store";
+import { getCachedPublicBusinessSummaries } from "@/lib/business-store";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Contoh Website Bisnis",
@@ -13,11 +13,13 @@ export const metadata: Metadata = {
 };
 
 export default async function ExamplesPage() {
-  let businesses = await Promise.resolve([] as Awaited<ReturnType<typeof listBusinessesFromDatabase>>);
+  let businesses = await Promise.resolve(
+    [] as Awaited<ReturnType<typeof getCachedPublicBusinessSummaries>>,
+  );
   let dataError = "";
 
   try {
-    businesses = await listBusinessesFromDatabase();
+    businesses = await getCachedPublicBusinessSummaries();
   } catch (error) {
     dataError = error instanceof Error ? error.message : "Gagal memuat data examples dari database.";
   }

@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { TemplateCatalogBrowser } from "@/components/template-catalog-browser";
 import { MarketingNav } from "@/components/marketing-nav";
-import { listTemplatesFromDatabase } from "@/lib/business-store";
+import { getCachedPublicTemplates } from "@/lib/business-store";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "Template Website Bisnis",
@@ -12,18 +12,18 @@ export const metadata: Metadata = {
 };
 
 export default async function TemplatesPage() {
-  let liveTemplates = await Promise.resolve([] as Awaited<ReturnType<typeof listTemplatesFromDatabase>>);
+  let liveTemplates = await Promise.resolve([] as Awaited<ReturnType<typeof getCachedPublicTemplates>>);
   let dataError = "";
 
   try {
-    liveTemplates = await listTemplatesFromDatabase();
+    liveTemplates = await getCachedPublicTemplates();
   } catch (error) {
     dataError = error instanceof Error ? error.message : "Gagal memuat template dari database.";
   }
 
   return (
-    <main className="nature-stage min-h-screen px-6 py-8 md:px-10 lg:px-16">
-      <section className="marketing-hero nature-graffiti mx-auto max-w-7xl rounded-[2.5rem] px-6 py-8 md:px-8 lg:px-10">
+    <main className="nature-stage min-h-screen overflow-x-hidden px-6 py-8 md:px-10 lg:px-16">
+      <section className="glass-panel relative mx-auto max-w-7xl overflow-hidden rounded-[2.5rem] border border-[#e3ef26]/14 px-6 py-8 md:px-8 lg:px-10">
         <MarketingNav />
 
         <div className="relative z-10 mt-10 max-w-4xl">

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { LandingPage } from "@/components/landing-page";
-import { listTemplatesFromDatabase } from "@/lib/business-store";
+import { getCachedPublicTemplates } from "@/lib/business-store";
 import { buildTemplatePreviewBusiness } from "@/lib/template-preview-data";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +17,7 @@ export async function generateMetadata({
   const { key } = await params;
 
   try {
-    const templates = await listTemplatesFromDatabase();
+    const templates = await getCachedPublicTemplates();
     const template = templates.find((item) => item.key === key);
 
     if (!template) {
@@ -33,7 +33,7 @@ export async function generateMetadata({
   } catch {
     return {
       title: "Template Preview",
-      description: "Preview template bisnis interaktif.",
+      description: "Preview template bisnis.",
     };
   }
 }
@@ -44,7 +44,7 @@ export default async function TemplatePreviewPage({
   params: Promise<{ key: string }>;
 }) {
   const { key } = await params;
-  const templates = await listTemplatesFromDatabase();
+  const templates = await getCachedPublicTemplates();
   const template = templates.find((item) => item.key === key);
 
   if (!template) {

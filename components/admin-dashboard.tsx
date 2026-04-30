@@ -5,22 +5,14 @@ import {
   Building2,
   Eye,
   FolderKanban,
-  type LucideIcon,
   MessageCircleMore,
+  type LucideIcon,
   ShieldCheck,
   Sparkles,
   Users2,
 } from "lucide-react";
 import { AdminLogoutButton } from "@/components/admin-logout-button";
-import { OwnerUserManager } from "@/components/owner-user-manager";
-import type { AdminIdentity, Business, ManagedUser, Template } from "@/lib/types";
-
-const adminDateFormatter = new Intl.DateTimeFormat("id-ID", {
-  day: "2-digit",
-  month: "short",
-  year: "numeric",
-  timeZone: "Asia/Bangkok",
-});
+import type { AdminIdentity, Business, Template } from "@/lib/types";
 
 type DashboardMetric = {
   label: string;
@@ -41,12 +33,10 @@ export function AdminDashboard({
   currentAdmin,
   businesses,
   templates,
-  users,
 }: {
   currentAdmin: AdminIdentity;
   businesses: Business[];
   templates: Template[];
-  users: ManagedUser[];
 }) {
   const totalServices = businesses.reduce((total, business) => total + business.services.length, 0);
   const totalTestimonials = businesses.reduce((total, business) => total + business.testimonials.length, 0);
@@ -58,15 +48,15 @@ export function AdminDashboard({
   const testimonialCoverage = businesses.length > 0 ? Math.round((businessesWithTestimonials / businesses.length) * 100) : 0;
   const galleryCoverage = businesses.length > 0 ? Math.round((businessesWithGallery / businesses.length) * 100) : 0;
   const previewHref = businesses[0] ? `/${businesses[0].slug}` : "/";
-  const visibleTemplateCategories = Array.from(
-    new Set(templates.map((template) => template.categoryLabel || template.category)),
-  ).slice(0, 4);
 
   const metrics: DashboardMetric[] = [
     {
       label: "Website",
       value: businesses.length,
-      description: currentAdmin.role === "owner" ? "Seluruh bisnis yang bisa dikelola dari akun owner." : "Website yang menjadi scope akun ini.",
+      description:
+        currentAdmin.role === "owner"
+          ? "Seluruh bisnis yang bisa dikelola dari akun owner."
+          : "Website yang menjadi scope akun ini.",
       icon: Building2,
     },
     {
@@ -105,12 +95,12 @@ export function AdminDashboard({
       tone: "neutral",
     },
     {
-      label: currentAdmin.role === "owner" ? "Kelola akses user" : "Lihat scope akun",
+      label: currentAdmin.role === "owner" ? "Kelola akses user" : "Lihat scope bisnis",
       description:
         currentAdmin.role === "owner"
-          ? "Owner dapat membuat akun baru dan memberi akses bisnis dari satu tempat."
-          : "Ringkasan bisnis di bawah menunjukkan website yang bisa Anda kelola sekarang.",
-      href: currentAdmin.role === "owner" ? "#owner-access" : "#scope-summary",
+          ? "Halaman ini khusus untuk melihat roster user dan menambah akun baru tanpa menumpuk di dashboard."
+          : "Daftar website yang bisa Anda kelola sekarang dipusatkan di halaman kelola bisnis.",
+      href: currentAdmin.role === "owner" ? "/admin/user" : "/admin/business",
       icon: Users2,
       tone: "neutral",
     },
@@ -120,13 +110,7 @@ export function AdminDashboard({
     <main className="admin-grid min-h-screen px-4 py-6 md:px-8 md:py-8">
       <div className="mx-auto grid max-w-7xl gap-6 xl:grid-cols-[280px_minmax(0,1fr)]">
         <aside className="glass-panel self-start rounded-[2rem] p-5 xl:sticky xl:top-6">
-          <div className="rounded-[1.7rem] border border-white/10 bg-[#071d18]/80 p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-lime-100/70">Bisnis.me admin</p>
-            <h1 className="mt-3 font-sans text-2xl font-semibold tracking-[-0.03em] text-white">Workspace</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-300">
-              Dashboard operasional yang merangkum website, template, dan hak akses tanpa membuat admin tersesat.
-            </p>
-          </div>
+          
 
           <div className="mt-5 rounded-[1.7rem] border border-white/10 bg-white/5 p-5">
             <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Signed in</p>
@@ -152,8 +136,8 @@ export function AdminDashboard({
             />
             <SidebarLink
               href="/admin/business"
-              label="Business manager"
-              description="Kelola isi landing page, gambar, dan konten tiap bisnis."
+              label="Kelola bisnis"
+              description="Kelola isi landing page, gambar, dan registry tiap bisnis."
               icon={FolderKanban}
             />
             <SidebarLink
@@ -162,20 +146,17 @@ export function AdminDashboard({
               description="Lihat opsi template dan identitas visual yang tersedia."
               icon={Sparkles}
             />
+            {currentAdmin.role === "owner" ? (
+              <SidebarLink
+                href="/admin/user"
+                label="Kelola akses user"
+                description="Buka halaman khusus roster user dan pembuatan akun baru."
+                icon={Users2}
+              />
+            ) : null}
           </nav>
 
-          <div className="mt-5 rounded-[1.7rem] border border-white/10 bg-slate-950/35 p-5">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400">Access scope</p>
-            <p className="mt-3 text-sm leading-6 text-slate-300">
-              {currentAdmin.role === "owner"
-                ? "Owner dapat melihat semua bisnis, semua template, dan panel manajemen user."
-                : "Admin hanya melihat bisnis dan template yang memang dipetakan ke akun ini."}
-            </p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-              <MiniInfoCard label="Coverage template" value={`${templateCoverage}%`} />
-              <MiniInfoCard label="Item galeri" value={totalGalleryItems} />
-            </div>
-          </div>
+          
 
           <AdminLogoutButton
             className="mt-5 inline-flex w-full items-center justify-center rounded-[1.15rem] border border-white/12 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -196,27 +177,13 @@ export function AdminDashboard({
                   Panel kerja yang lebih rapi, cepat dibaca, dan nyaman dipakai tiap hari.
                 </h2>
                 <p className="mt-3 text-sm leading-7 text-slate-300">
-                  Struktur halaman ini mengambil pola admin panel yang familiar: aksi utama ada di atas, angka penting
-                  terlihat langsung, dan daftar bisnis dipresentasikan seperti workspace operasional, bukan seperti
-                  landing page.
+                  Dashboard ini sekarang fokus ke ringkasan. Registry bisnis dipusatkan di kelola bisnis, sementara
+                  roster user dipisah ke halaman akses user agar area kerja utama tetap bersih.
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-3">
-                <Link
-                  href="/admin/business"
-                  className="inline-flex items-center gap-2 rounded-[1rem] bg-lime-300 px-4 py-3 text-sm font-semibold text-slate-950 transition hover:-translate-y-0.5"
-                >
-                  Kelola bisnis
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-                <Link
-                  href="/admin/templates"
-                  className="inline-flex items-center gap-2 rounded-[1rem] border border-white/12 bg-white/5 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
-                >
-                  Lihat template
-                </Link>
-                {businesses[0] ? (
+              {currentAdmin.role === "admin" && businesses[0] ? (
+                <div className="flex flex-wrap gap-3">
                   <Link
                     href={previewHref}
                     className="inline-flex items-center gap-2 rounded-[1rem] border border-white/12 bg-slate-950/35 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/10"
@@ -224,8 +191,8 @@ export function AdminDashboard({
                     <Eye className="h-4 w-4" />
                     Preview situs
                   </Link>
-                ) : null}
-              </div>
+                </div>
+              ) : null}
             </div>
 
             <div className="relative mt-6 grid gap-4 lg:grid-cols-3">
@@ -241,93 +208,33 @@ export function AdminDashboard({
             ))}
           </section>
 
-          <section className="grid gap-6 2xl:grid-cols-[1.45fr_0.95fr]">
-            <section id="scope-summary" className="glass-panel rounded-[2rem] p-6">
+          {currentAdmin.role === "admin" ? (
+            <section className="glass-panel rounded-[2rem] p-6">
               <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-lime-100/70">Business registry</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-lime-100/70">
+                    Operational snapshot
+                  </p>
                   <h3 className="mt-2 font-sans text-2xl font-semibold tracking-[-0.03em] text-white">
-                    Website yang masuk ke workspace Anda
+                    Kesiapan konten website dalam scope Anda
                   </h3>
                   <p className="mt-2 text-sm leading-6 text-slate-400">
-                    Setiap baris memudahkan admin memindai slug, template aktif, jumlah konten, dan pintasan aksi.
+                    Panel ini hanya tampil untuk admin agar mereka cepat melihat kelengkapan konten bisnis yang sedang
+                    ditangani.
                   </p>
                 </div>
-                <span className="inline-flex w-fit items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-300">
-                  {businesses.length} bisnis
-                </span>
+
+                <Link
+                  href="/admin/business"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-lime-100"
+                >
+                  Buka kelola bisnis
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
 
-              {businesses.length === 0 ? (
-                <div className="mt-5 rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 p-5 text-sm leading-7 text-slate-300">
-                  Belum ada bisnis yang bisa diakses oleh akun ini. Jika Anda owner, buka editor bisnis untuk membuat
-                  website pertama.
-                </div>
-              ) : (
-                <div className="mt-5 space-y-3">
-                  {businesses.map((business) => (
-                    <article
-                      key={business.id}
-                      className="rounded-[1.5rem] border border-white/10 bg-slate-950/35 p-4 transition hover:border-lime-300/18"
-                    >
-                      <div className="flex flex-col gap-4 2xl:flex-row 2xl:items-center 2xl:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <h4 className="font-sans text-lg font-semibold text-white">{business.name}</h4>
-                            <span
-                              className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] ${
-                                business.templateName
-                                  ? "border-lime-300/20 bg-lime-300/10 text-lime-100"
-                                  : "border-amber-300/20 bg-amber-300/10 text-amber-100"
-                              }`}
-                            >
-                              {business.templateName ?? "Belum ada template"}
-                            </span>
-                          </div>
-                          <p className="mt-1 font-mono text-xs text-slate-400">/{business.slug}</p>
-                          <p className="mt-3 text-xs uppercase tracking-[0.18em] text-slate-500">
-                            Diupdate {formatDateLabel(business.updatedAt)}
-                          </p>
-                        </div>
-
-                        <div className="grid gap-2 sm:grid-cols-3 2xl:min-w-[320px]">
-                          <CountPill label="Layanan" value={business.services.length} />
-                          <CountPill label="Testimoni" value={business.testimonials.length} />
-                          <CountPill label="Galeri" value={business.galleryItems.length} />
-                        </div>
-
-                        <div className="flex flex-wrap gap-2 2xl:justify-end">
-                          <Link
-                            href={`/${business.slug}`}
-                            className="inline-flex items-center gap-2 rounded-[0.95rem] border border-white/12 bg-white/5 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Preview
-                          </Link>
-                          <Link
-                            href="/admin/business"
-                            className="inline-flex items-center gap-2 rounded-[0.95rem] border border-lime-300/20 bg-lime-300/10 px-4 py-2 text-sm font-semibold text-lime-100 transition hover:bg-lime-300/16"
-                          >
-                            <FolderKanban className="h-4 w-4" />
-                            Buka editor
-                          </Link>
-                        </div>
-                      </div>
-                    </article>
-                  ))}
-                </div>
-              )}
-            </section>
-
-            <div className="space-y-6">
-              <section className="glass-panel rounded-[2rem] p-6">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-lime-100/70">Operational snapshot</p>
-                <h3 className="mt-2 font-sans text-2xl font-semibold tracking-[-0.03em] text-white">Kesiapan konten</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Panel ini membantu admin melihat apakah setiap website sudah punya fondasi konten dasar.
-                </p>
-
-                <div className="mt-5 space-y-4">
+              <div className="mt-5 grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+                <div className="space-y-4">
                   <CoverageBar
                     label="Template sudah terpasang"
                     value={`${businessesWithTemplate}/${businesses.length || 0}`}
@@ -345,78 +252,19 @@ export function AdminDashboard({
                   />
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
+                <div className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
                   <MiniInfoCard label="Total galeri" value={totalGalleryItems} />
                   <MiniInfoCard label="Role aktif" value={currentAdmin.role} />
-                  <MiniInfoCard label="User terlihat" value={currentAdmin.role === "owner" ? users.length : "Scoped"} />
+                  <MiniInfoCard label="Bisnis terlihat" value={businesses.length} />
                 </div>
-              </section>
+              </div>
 
-              <section id="template-visibility" className="glass-panel rounded-[2rem] p-6">
-                <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.26em] text-lime-100/70">Template visibility</p>
-                    <h3 className="mt-2 font-sans text-2xl font-semibold tracking-[-0.03em] text-white">
-                      Template yang bisa dipakai sekarang
-                    </h3>
-                  </div>
-                  <Link href="/admin/templates" className="inline-flex items-center gap-2 text-sm font-semibold text-lime-100">
-                    Buka katalog
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {visibleTemplateCategories.map((category) => (
-                    <span
-                      key={category}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300"
-                    >
-                      {category}
-                    </span>
-                  ))}
-                </div>
-
-                <div className="mt-5 space-y-3">
-                  {templates.length === 0 ? (
-                    <div className="rounded-[1.5rem] border border-dashed border-white/12 bg-white/5 p-5 text-sm leading-7 text-slate-300">
-                      Belum ada template yang masuk ke scope akun ini.
-                    </div>
-                  ) : (
-                    templates.slice(0, 5).map((template) => (
-                      <article key={template.id} className="rounded-[1.5rem] border border-white/10 bg-white/5 p-4">
-                        <div className="flex items-start gap-3">
-                          <span
-                            className="mt-1 inline-flex h-3 w-3 shrink-0 rounded-full"
-                            style={{ backgroundColor: template.accent ?? "#c7f36c" }}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <p className="font-sans text-base font-semibold text-white">{template.name}</p>
-                              <span className="rounded-full border border-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-300">
-                                {template.categoryLabel || template.category}
-                              </span>
-                            </div>
-                            <p className="mt-2 text-sm leading-6 text-slate-300">{template.description}</p>
-                            <div className="mt-3 flex flex-wrap gap-2 text-xs text-slate-400">
-                              <span className="rounded-full border border-white/10 bg-slate-950/35 px-3 py-1">
-                                Fit: {template.fit}
-                              </span>
-                              <span className="rounded-full border border-white/10 bg-slate-950/35 px-3 py-1">
-                                Feature: {template.feature}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </article>
-                    ))
-                  )}
-                </div>
-              </section>
-            </div>
-          </section>
-
-          {currentAdmin.role === "owner" ? <OwnerUserManager businesses={businesses} initialUsers={users} /> : null}
+              <div className="mt-6 rounded-[1.35rem] border border-white/10 bg-slate-950/35 p-4 text-sm leading-6 text-slate-300">
+                Daftar bisnis lengkap sudah dipindah ke halaman <span className="font-semibold text-white">Kelola bisnis</span>{" "}
+                supaya dashboard tetap fokus ke ringkasan operasional.
+              </div>
+            </section>
+          ) : null}
         </div>
       </div>
     </main>
@@ -519,21 +367,6 @@ function MiniInfoCard({
   );
 }
 
-function CountPill({
-  label,
-  value,
-}: {
-  label: string;
-  value: number;
-}) {
-  return (
-    <div className="rounded-[1rem] border border-white/10 bg-white/5 px-3 py-2">
-      <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-400">{label}</p>
-      <p className="mt-1 font-sans text-base font-semibold text-white">{value}</p>
-    </div>
-  );
-}
-
 function CoverageBar({
   label,
   value,
@@ -557,17 +390,4 @@ function CoverageBar({
       </div>
     </div>
   );
-}
-
-function formatDateLabel(value: string | undefined) {
-  if (!value) {
-    return "-";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return "-";
-  }
-
-  return adminDateFormatter.format(date);
 }
